@@ -1,0 +1,5 @@
+# Pycharm related
+.idea/*
+
+dist/*
+node_modules/*

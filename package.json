@@ -1,0 +1,29 @@
+{
+  "name": "inquisition-forms",
+  "version": "1.0.0",
+  "description": "Inquisition Form Data handler",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsup",
+    "test": "jest",
+    "format": "npx prettier --write ./src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/it-slothware/inquisition-frontend-forms.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/it-slothware/inquisition-frontend-forms/issues"
+  },
+  "homepage": "https://github.com/it-slothware/inquisition-frontend-forms#readme",
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.5",
+    "ts-jest": "^29.1.2",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.5"
+  }
+}

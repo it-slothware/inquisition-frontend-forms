@@ -1,10 +1,10 @@
 import { format as prettyFormat } from 'pretty-format'
-import { dateTimeField, laterThan } from '../src'
+import { dateField, laterThan } from '../src'
 
 describe('DateTime field factory', () => {
   // No arguments
   test('Without parameters', () => {
-    const field = dateTimeField()
+    const field = dateField()
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -13,7 +13,7 @@ describe('DateTime field factory', () => {
 
   // Single argument
   test('Label value only', () => {
-    const field = dateTimeField('Test label')
+    const field = dateField('Test label')
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -21,7 +21,7 @@ describe('DateTime field factory', () => {
   })
 
   test('Default value only', () => {
-    const field = dateTimeField(new Date())
+    const field = dateField(new Date())
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -29,7 +29,7 @@ describe('DateTime field factory', () => {
   })
 
   test('Nullable only', () => {
-    const field = dateTimeField(true)
+    const field = dateField(true)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -37,7 +37,7 @@ describe('DateTime field factory', () => {
   })
 
   test('Validators only', () => {
-    const field = dateTimeField([laterThan(new Date())])
+    const field = dateField([laterThan(new Date())])
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -46,7 +46,7 @@ describe('DateTime field factory', () => {
 
   // Two arguments
   test('Label and default value', () => {
-    const field = dateTimeField('Test label', new Date())
+    const field = dateField('Test label', new Date())
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -54,7 +54,7 @@ describe('DateTime field factory', () => {
   })
 
   test('Label and nullable', () => {
-    const field = dateTimeField('Test label', true)
+    const field = dateField('Test label', true)
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -62,7 +62,7 @@ describe('DateTime field factory', () => {
   })
 
   test('Label and validators', () => {
-    const field = dateTimeField('Test label', [laterThan(new Date())])
+    const field = dateField('Test label', [laterThan(new Date())])
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -70,7 +70,7 @@ describe('DateTime field factory', () => {
   })
 
   test('Default value and nullable', () => {
-    const field = dateTimeField(null, true)
+    const field = dateField(null, true)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
@@ -78,7 +78,7 @@ describe('DateTime field factory', () => {
   })
 
   test('Default value and validators', () => {
-    const field = dateTimeField('Test label', [laterThan(new Date())])
+    const field = dateField('Test label', [laterThan(new Date())])
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -86,7 +86,7 @@ describe('DateTime field factory', () => {
   })
 
   test('Nullable and validators', () => {
-    const field = dateTimeField(true, [laterThan(new Date())])
+    const field = dateField(true, [laterThan(new Date())])
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -95,7 +95,7 @@ describe('DateTime field factory', () => {
 
   // Three arguments
   test('Label, default value and nullable', () => {
-    const field = dateTimeField('Test label', new Date(), true)
+    const field = dateField('Test label', new Date(), true)
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -103,7 +103,7 @@ describe('DateTime field factory', () => {
   })
 
   test('Label, default value, validators', () => {
-    const field = dateTimeField('Test label', new Date(), [laterThan(new Date())])
+    const field = dateField('Test label', new Date(), [laterThan(new Date())])
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -111,7 +111,7 @@ describe('DateTime field factory', () => {
   })
 
   test('Default value, nullable, validators', () => {
-    const field = dateTimeField(null, true, [laterThan(new Date())])
+    const field = dateField(null, true, [laterThan(new Date())])
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
@@ -120,7 +120,7 @@ describe('DateTime field factory', () => {
 
   // Four argument
   test('Label, default value, nullable, validators', () => {
-    const field = dateTimeField('Test label', null, true, [laterThan(new Date())])
+    const field = dateField('Test label', null, true, [laterThan(new Date())])
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
@@ -130,7 +130,7 @@ describe('DateTime field factory', () => {
 
 describe('Test default values', () => {
   test('Default value as callable', () => {
-    const field = dateTimeField(() => new Date())
+    const field = dateField(() => new Date())
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
     expect(field.getDefault()).toBeInstanceOf(Date)
@@ -138,7 +138,7 @@ describe('Test default values', () => {
   })
 
   test('Default value as callable and nullable', () => {
-    const field = dateTimeField(() => null, true)
+    const field = dateField(() => null, true)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
@@ -178,7 +178,7 @@ describe.each([
   })
 
   test(`.toNative(${prettyFormat(data)})`, () => {
-    const field = dateTimeField('', nullable)
+    const field = dateField('', nullable)
     const nativeValue = field.toNative(data)
     if (nativeValue === null) expect(nativeValue).toBe(null)
     else expect(nativeValue).toBeInstanceOf(Date)
@@ -187,6 +187,6 @@ describe.each([
 })
 
 test('.fromNative()', () => {
-  const field = dateTimeField()
-  expect(field.fromNative(new Date(2024, 4, 4, 12, 35, 59))).toBe('2024-05-04T10:35:59.000Z')
+  const field = dateField()
+  expect(field.fromNative(new Date(2024, 4, 4, 12, 35, 59))).toBe('2024-05-04')
 })

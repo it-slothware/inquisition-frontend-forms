@@ -102,7 +102,9 @@ describe('Boolean field factory', () => {
     expect(field.getDefault()).toBe(null)
     expect(field.validators.length).toBe(1)
   })
+})
 
+describe('Test default values', () => {
   test('Default value as callable', () => {
     const field = booleanField(() => true)
     expect(field.label).toBe('')

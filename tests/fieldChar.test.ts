@@ -108,7 +108,9 @@ describe('Char field factory', () => {
     expect(field.validators.length).toBe(1)
     expect(field.validators[0]).toBe(notBlank)
   })
+})
 
+describe('Test default values', () => {
   test('Default value as callable', () => {
     const field = charField(() => 'Some default')
     expect(field.label).toBe('')

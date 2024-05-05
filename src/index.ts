@@ -1,4 +1,4 @@
-import { booleanField, charField, numberField, dateTimeField, dateField } from './factories'
+import { booleanField, charField, numberField, dateTimeField, dateField, arrayField, fieldSet } from './factories'
 import { FormDefinition, Form } from './forms'
 import {
   notNull,
@@ -20,6 +20,8 @@ export {
   numberField,
   dateTimeField,
   dateField,
+  arrayField,
+  fieldSet,
 
   // Forms
   FormDefinition,

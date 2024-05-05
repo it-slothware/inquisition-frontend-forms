@@ -20,6 +20,9 @@ export type FormData<T> = {
 export type ArrayFieldDefault<T extends FieldSetRaw | FieldBase<any, any>> =
   T extends FieldBase<any, any> ? ReturnType<T['getDefault']> : FormData<T>
 
+type ArrayFieldFromNative<T extends FieldSetRaw | FieldBase<any, any>> =
+  T extends FieldBase<any, any> ? ReturnType<T['fromNative']> : FormData<T>
+
 export type ErrorList = Array<string>
 export type FlattenedErrors = Record<string, ErrorList>
 
@@ -93,7 +96,7 @@ export class BooleanField<P extends boolean = false> extends FieldBase<boolean, 
   }
 
   toNative(rawValue: any): ConditionalNullable<boolean, P> {
-    if (this.nullable && rawValue === null) return null
+    if (this.nullable && rawValue === null) return null as ConditionalNullable<boolean, P>
     if (typeof rawValue !== 'boolean') {
       console.warn(`Invalid data type: expected boolean, got ${typeof rawValue}`)
     }
@@ -106,7 +109,7 @@ export class BooleanField<P extends boolean = false> extends FieldBase<boolean, 
   }
 
   fromNative(value: ConditionalNullable<boolean, P>): ConditionalNullable<boolean, P> {
-    if (this.nullable && value === null) return null
+    if (this.nullable && value === null) return null as ConditionalNullable<boolean, P>
     return !!value
   }
 }
@@ -117,7 +120,7 @@ export class CharField<P extends boolean = false> extends FieldBase<string, P> {
   }
 
   toNative(rawValue: any): ConditionalNullable<string, P> {
-    if (this.nullable && rawValue === null) return null
+    if (this.nullable && rawValue === null) return null as ConditionalNullable<string, P>
     if (typeof rawValue === 'object') {
       if (Array.isArray(rawValue)) return `[${String(rawValue)}]`
     }
@@ -125,7 +128,7 @@ export class CharField<P extends boolean = false> extends FieldBase<string, P> {
   }
 
   fromNative(value: ConditionalNullable<string, P>): ConditionalNullable<string, P> {
-    if (this.nullable && value === null) return null
+    if (this.nullable && value === null) return null as ConditionalNullable<string, P>
     if (typeof value === 'string') return value
     return String(value)
   }
@@ -137,7 +140,7 @@ export class NumberField<P extends boolean = false> extends FieldBase<number, P>
   }
 
   toNative(rawValue: any): ConditionalNullable<number, P> {
-    if (this.nullable && rawValue === null) return null
+    if (this.nullable && rawValue === null) return null as ConditionalNullable<number, P>
 
     if (typeof rawValue === 'string') {
       rawValue = rawValue.replace(/(\d)\s+(\d)/g, '$1$2').trim()
@@ -149,7 +152,7 @@ export class NumberField<P extends boolean = false> extends FieldBase<number, P>
   }
 
   fromNative(value: ConditionalNullable<number, P>): ConditionalNullable<number, P> {
-    if (this.nullable && value === null) return null
+    if (this.nullable && value === null) return null as ConditionalNullable<number, P>
     if (typeof value === 'number') return value
     return Number(value)
   }
@@ -161,7 +164,7 @@ export class DateTimeField<P extends boolean = false> extends FieldBase<Date, P>
   }
 
   toNative(rawValue: any): ConditionalNullable<Date, P> {
-    if (this.nullable && rawValue === null) return null
+    if (this.nullable && rawValue === null) return null as ConditionalNullable<Date, P>
 
     if (typeof rawValue === 'string' && isNaN(Number(rawValue))) {
       const convertedDate = new Date(rawValue)
@@ -173,7 +176,7 @@ export class DateTimeField<P extends boolean = false> extends FieldBase<Date, P>
   }
 
   fromNative(value: ConditionalNullable<Date, P>): ConditionalNullable<string, P> {
-    if (value === null) return value as null
+    if (value === null) return value as null as ConditionalNullable<string, P>
     return value.toISOString()
   }
 }
@@ -184,7 +187,7 @@ export class DateField<P extends boolean = false> extends FieldBase<Date, P> {
   }
 
   toNative(rawValue: any): ConditionalNullable<Date, P> {
-    if (this.nullable && rawValue === null) return null
+    if (this.nullable && rawValue === null) return null as ConditionalNullable<Date, P>
 
     if (typeof rawValue === 'string' && isNaN(Number(rawValue))) {
       const convertedDate = new Date(rawValue)
@@ -196,13 +199,13 @@ export class DateField<P extends boolean = false> extends FieldBase<Date, P> {
   }
 
   fromNative(value: ConditionalNullable<Date, P>): ConditionalNullable<string, P> {
-    if (value === null) return value as null
+    if (value === null) return value as null as ConditionalNullable<string, P>
     return value.toISOString().split('T', 1)[0]
   }
 }
 
 export class ArrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean = false> extends FieldBase<
-  () => ConditionalNullable<ArrayFieldDefault<T>[], P>,
+  ArrayFieldDefault<T>[],
   P
 > {
   readonly baseField: FieldBase<any, any>
@@ -211,20 +214,48 @@ export class ArrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends b
   constructor(
     label: string,
     baseField: T,
-    defaultValue?: FieldDefault<() => ConditionalNullable<ArrayFieldDefault<T>[], P>, P>,
+    defaultValue?: () => ConditionalNullable<ArrayFieldDefault<T>[], P>,
     initialLength?: number,
     nullable?: P,
     validators?: FormFieldValidator[],
   ) {
+    if (initialLength === undefined) initialLength = 0
+    if (defaultValue === undefined)
+      defaultValue = () => {
+        const generatedDefault: ArrayFieldDefault<T>[] = []
+        for (let i = 0; i < this.initialLength; i++) {
+          generatedDefault.push(this.baseField.getDefault())
+        }
+        return generatedDefault
+      }
+
     super(label, defaultValue, nullable, validators)
+
     if (isFormField(baseField)) this.baseField = baseField
-    // else this.baseField = new FormFieldSet(baseField)
+    else this.baseField = new FieldSet(baseField)
+
     this.initialLength = initialLength || 0
+  }
+
+  toNative(rawValue: any): ConditionalNullable<ArrayFieldDefault<T>[], P> {
+    if (this.nullable && rawValue === null) return null as ConditionalNullable<ArrayFieldDefault<T>[], P>
+
+    if (!Array.isArray(rawValue)) {
+      console.warn(`Expected array, got: ${typeof rawValue}`)
+      return []
+    }
+    return rawValue.map((v) => this.baseField.toNative(v))
+  }
+
+  fromNative(value: ConditionalNullable<ArrayFieldDefault<T>[], P>): ConditionalNullable<ArrayFieldFromNative<T>[], P> {
+    if (value === null) return null as ConditionalNullable<ArrayFieldFromNative<T>[], P>
+    return value.map((v) => this.baseField.fromNative(v))
   }
 
   validateArray(value: ConditionalNullable<any[], P>): FlattenedErrors {
     const errors: FlattenedErrors = {}
-    errors.non_field_errors = this.validate(value)
+    // TODO fix typing of this
+    // errors.non_field_errors = this.validate(value)
 
     if (this.nullable && value === null) return errors
 
@@ -250,28 +281,34 @@ export class FieldSet<DV extends FieldSetRaw, P extends boolean = false> extends
 > {
   readonly fieldSetRoot: FormFieldSetRoot<DV>
 
-  constructor(fieldSetRaw: DV, nullable?: P, validators?: any[]) {
-    super('', {} as FormData<DV>, nullable, validators)
+  constructor(
+    rawFieldSet: DV,
+    label?: string,
+    defaultValue?: () => ConditionalNullable<FormData<DV>, P>,
+    nullable?: P,
+    validators?: FormFieldValidator[],
+  ) {
+    if (label === undefined) label = ''
+    if (defaultValue === undefined) {
+      defaultValue = () => {
+        const defaultData: Record<string, any> = {}
+        for (const fieldName of Object.keys(this.fieldSetRoot)) {
+          const field = this.fieldSetRoot[fieldName]
+          defaultData[fieldName] = field.getDefault()
+        }
+        return defaultData as ConditionalNullable<FormData<DV>, P>
+      }
+    }
+    super(label, defaultValue, nullable, validators)
 
     const normalizedFieldSetRaw: Record<string, FieldBase<any, any>> = {}
 
-    for (const [fieldName, field] of Object.entries(fieldSetRaw)) {
+    for (const [fieldName, field] of Object.entries(rawFieldSet)) {
       if (isFormField(field)) normalizedFieldSetRaw[fieldName] = field
       else normalizedFieldSetRaw[fieldName] = new FieldSet(field)
     }
 
     this.fieldSetRoot = normalizedFieldSetRaw as FormFieldSetRoot<DV>
-  }
-
-  override getDefault(): ConditionalNullable<FormData<DV>, P> {
-    if (this.nullable) return null
-
-    const defaultValue: Record<string, any> = {}
-    for (const fieldName of Object.keys(this.fieldSetRoot)) {
-      const field = this.fieldSetRoot[fieldName]
-      defaultValue[fieldName] = field.getDefault()
-    }
-    return defaultValue as ConditionalNullable<FormData<DV>, P>
   }
 
   validateFieldSet(data: FormData<DV>): FlattenedErrors {

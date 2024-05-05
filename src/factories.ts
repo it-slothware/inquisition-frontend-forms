@@ -19,7 +19,7 @@ import { type FormFieldValidator } from './validators'
 //         BooleanField
 // ----------------------------
 
-function isDefaultBooleanValue(value: any): value is FieldDefault<boolean, true> {
+function isDefaultBooleanValue<P extends boolean>(value: any): value is FieldDefault<boolean, P> {
   return typeof value === 'boolean' || typeof value === 'function' || value === null
 }
 
@@ -52,7 +52,7 @@ export function booleanField<P extends boolean>(
   nullable: P,
   validators: FormFieldValidator[],
 ): BooleanField<P>
-export function booleanField<P extends boolean = false>(argFirst?, argSecond?, argThird?, argFourth?): BooleanField {
+export function booleanField<P extends boolean = false>(argFirst?, argSecond?, argThird?, argFourth?): BooleanField<P> {
   let label: string = ''
   let defaultValue: FieldDefault<boolean, P> = false
   let nullable: P = false as P
@@ -60,7 +60,7 @@ export function booleanField<P extends boolean = false>(argFirst?, argSecond?, a
 
   if (isFieldLabel(argFirst)) {
     label = argFirst
-    if (isDefaultBooleanValue(argSecond)) {
+    if (isDefaultBooleanValue<P>(argSecond)) {
       defaultValue = argSecond
 
       if (isBoolean(argThird)) {
@@ -75,7 +75,7 @@ export function booleanField<P extends boolean = false>(argFirst?, argSecond?, a
     } else if (isValidationFunctionArray(argSecond)) {
       validators = argSecond
     }
-  } else if (isDefaultBooleanValue(argFirst)) {
+  } else if (isDefaultBooleanValue<P>(argFirst)) {
     defaultValue = argFirst
 
     if (isBoolean(argSecond)) {
@@ -98,7 +98,7 @@ export function booleanField<P extends boolean = false>(argFirst?, argSecond?, a
 //         CharField
 // -------------------------
 
-function isDefaultCharValue(value: any): value is FieldDefault<string, true> {
+function isDefaultCharValue<P extends boolean>(value: any): value is FieldDefault<string, P> {
   return typeof value === 'string' || typeof value === 'function' || value === null
 }
 
@@ -137,8 +137,8 @@ export function charField<P extends boolean = false>(argFirst?, argSecond?, argT
   let nullable: P = false as P
   let validators: FormFieldValidator[] = []
 
-  if (isDefaultCharValue(argFirst)) {
-    if (isFieldLabel(argFirst) && isDefaultCharValue(argSecond)) {
+  if (isDefaultCharValue<P>(argFirst)) {
+    if (isFieldLabel(argFirst) && isDefaultCharValue<P>(argSecond)) {
       label = argFirst
       defaultValue = argSecond
 
@@ -182,7 +182,7 @@ export function charField<P extends boolean = false>(argFirst?, argSecond?, argT
 //         NumberField
 // ---------------------------
 
-function isDefaultNumberValue(value: any): value is FieldDefault<number, true> {
+function isDefaultNumberValue<P extends boolean>(value: any): value is FieldDefault<number, P> {
   return (typeof value === 'number' && !isNaN(value)) || typeof value === 'function' || value === null
 }
 
@@ -232,7 +232,7 @@ export function numberField<P extends boolean = false>(argFirst?, argSecond?, ar
   if (isFieldLabel(argFirst)) {
     label = argFirst
 
-    if (isDefaultNumberValue(argSecond)) {
+    if (isDefaultNumberValue<P>(argSecond)) {
       defaultValue = argSecond
 
       if (isBoolean(argThird)) {
@@ -253,7 +253,7 @@ export function numberField<P extends boolean = false>(argFirst?, argSecond?, ar
     } else if (isValidationFunctionArray(argSecond)) {
       validators = argSecond
     }
-  } else if (isDefaultNumberValue(argFirst)) {
+  } else if (isDefaultNumberValue<P>(argFirst)) {
     defaultValue = argFirst
 
     if (isBoolean(argSecond)) {
@@ -282,7 +282,7 @@ export function numberField<P extends boolean = false>(argFirst?, argSecond?, ar
 //         DateTimeField
 // -----------------------------
 
-function isDefaultDateValue(value: any): value is FieldDefault<Date, true> {
+function isDefaultDateValue<P extends boolean>(value: any): value is FieldDefault<Date, P> {
   return value instanceof Date || value === null || typeof value === 'function'
 }
 
@@ -337,7 +337,7 @@ export function dateTimeField<P extends boolean = false>(
   if (isFieldLabel(argFirst)) {
     label = argFirst
 
-    if (isDefaultDateValue(argSecond)) {
+    if (isDefaultDateValue<P>(argSecond)) {
       defaultValue = argSecond
 
       if (isBoolean(argThird)) {
@@ -358,7 +358,7 @@ export function dateTimeField<P extends boolean = false>(
     } else if (isValidationFunctionArray(argSecond)) {
       validators = argSecond
     }
-  } else if (isDefaultDateValue(argFirst)) {
+  } else if (isDefaultDateValue<P>(argFirst)) {
     defaultValue = argFirst
 
     if (isBoolean(argSecond)) {
@@ -425,7 +425,7 @@ export function dateField<P extends boolean = false>(argFirst?, argSecond?, argT
   if (isFieldLabel(argFirst)) {
     label = argFirst
 
-    if (isDefaultDateValue(argSecond)) {
+    if (isDefaultDateValue<P>(argSecond)) {
       defaultValue = argSecond
 
       if (isBoolean(argThird)) {
@@ -446,7 +446,7 @@ export function dateField<P extends boolean = false>(argFirst?, argSecond?, argT
     } else if (isValidationFunctionArray(argSecond)) {
       validators = argSecond
     }
-  } else if (isDefaultDateValue(argFirst)) {
+  } else if (isDefaultDateValue<P>(argFirst)) {
     defaultValue = argFirst
 
     if (isBoolean(argSecond)) {
@@ -474,26 +474,192 @@ export function dateField<P extends boolean = false>(argFirst?, argSecond?, argT
 export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(baseField: T): ArrayField<T>
 export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(
   baseField: T,
-  defaultValue: FieldDefault<() => ConditionalNullable<ArrayFieldDefault<T>[], false>, false>,
+  defaultValue: () => ConditionalNullable<ArrayFieldDefault<T>[], false>,
 ): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(
+  baseField: T,
+  initialLength: number,
+): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  baseField: T,
+  nullable: P,
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(
+  baseField: T,
+  validators: FormFieldValidator[],
+): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(label: string, baseField: T): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  baseField: T,
+  defaultValue: () => ConditionalNullable<ArrayFieldDefault<T>[], P>,
+  nullable: P,
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(
+  baseField: T,
+  defaultValue: () => ConditionalNullable<ArrayFieldDefault<T>[], false>,
+  validators: FormFieldValidator[],
+): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  baseField: T,
+  initialLength: number,
+  nullable: P,
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(
+  baseField: T,
+  initialLength: number,
+  validators: FormFieldValidator[],
+): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  baseField: T,
+  nullable: P,
+  validators: FormFieldValidator[],
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(
+  label: string,
+  baseField: T,
+  defaultValue: () => ConditionalNullable<ArrayFieldDefault<T>[], false>,
+): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(
+  label: string,
+  baseField: T,
+  initialLength: number,
+): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  label: string,
+  baseField: T,
+  nullable: P,
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(
+  label: string,
+  baseField: T,
+  validators: FormFieldValidator[],
+): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  baseField: T,
+  defaultValue: () => ConditionalNullable<ArrayFieldDefault<T>[], P>,
+  nullable: P,
+  validators: FormFieldValidator[],
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  baseField: T,
+  initialLength: number,
+  nullable: P,
+  validators: FormFieldValidator[],
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  label: string,
+  baseField: T,
+  defaultValue: () => ConditionalNullable<ArrayFieldDefault<T>[], P>,
+  nullable: P,
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(
+  label: string,
+  baseField: T,
+  defaultValue: () => ConditionalNullable<ArrayFieldDefault<T>[], false>,
+  validators: FormFieldValidator[],
+): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  label: string,
+  baseField: T,
+  initialLength: number,
+  nullable: P,
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(
+  label: string,
+  baseField: T,
+  initialLength: number,
+  validators: FormFieldValidator[],
+): ArrayField<T>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  label: string,
+  baseField: T,
+  nullable: P,
+  validators: FormFieldValidator[],
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  label: string,
+  baseField: T,
+  defaultValue: () => ConditionalNullable<ArrayFieldDefault<T>[], P>,
+  nullable: P,
+  validators: FormFieldValidator[],
+): ArrayField<T, P>
+export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends boolean>(
+  label: string,
+  baseField: T,
+  initialLength: number,
+  nullable: P,
+  validators: FormFieldValidator[],
+): ArrayField<T, P>
 export function arrayField<P extends boolean = false>(
   argFirst?,
   argSecond?,
   argThird?,
   argFourth?,
   argFifth?,
-  argSixts?,
 ): ArrayField<any, P> {
   let label: string = ''
-  let defaultValue: FieldDefault<Date, P> = new Date()
+  let baseField: FieldSetRaw | FieldBase<any, any> = {}
+  let defaultValue: any = undefined // TODO type this line
+  let initialLength: number = 0
   let nullable: P = false as P
   let validators: FormFieldValidator[] = []
 
+  // TODO fix this typeof function stuff. make a dedicated generic type for this
+
   if (isFieldLabel(argFirst)) {
     label = argFirst
+    baseField = argSecond
 
-    if (isDefaultDateValue(argSecond)) {
+    if (typeof argThird === 'function') {
+      defaultValue = argThird
+
+      if (isBoolean(argFourth)) {
+        nullable = argFourth as P
+
+        if (isValidationFunctionArray(argFifth)) {
+          validators = argFifth
+        }
+      } else if (isValidationFunctionArray(argFourth)) {
+        validators = argFourth
+      }
+    } else if (typeof argThird === 'number') {
+      initialLength = argThird
+
+      if (isBoolean(argFourth)) {
+        nullable = argFourth as P
+
+        if (isValidationFunctionArray(argFifth)) {
+          validators = argFifth
+        }
+      } else if (isValidationFunctionArray(argFourth)) {
+        validators = argFourth
+      }
+    } else if (isBoolean(argThird)) {
+      nullable = argThird as P
+
+      if (isValidationFunctionArray(argFourth)) {
+        validators = argFourth
+      }
+    } else if (isValidationFunctionArray(argThird)) {
+      validators = argThird
+    }
+  } else {
+    baseField = argFirst
+
+    if (typeof argSecond === 'function') {
       defaultValue = argSecond
+
+      if (isBoolean(argThird)) {
+        nullable = argThird as P
+
+        if (isValidationFunctionArray(argFourth)) {
+          validators = argFourth
+        }
+      } else if (isValidationFunctionArray(argThird)) {
+        validators = argThird
+      }
+    } else if (typeof argSecond === 'number') {
+      initialLength = argSecond
 
       if (isBoolean(argThird)) {
         nullable = argThird as P
@@ -513,27 +679,11 @@ export function arrayField<P extends boolean = false>(
     } else if (isValidationFunctionArray(argSecond)) {
       validators = argSecond
     }
-  } else if (isDefaultDateValue(argFirst)) {
-    defaultValue = argFirst
-
-    if (isBoolean(argSecond)) {
-      nullable = argSecond as P
-
-      if (isValidationFunctionArray(argThird)) {
-        validators = argThird
-      }
-    } else if (isValidationFunctionArray(argSecond)) {
-      validators = argSecond
-    }
-  } else if (isBoolean(argFirst)) {
-    nullable = argFirst as P
-
-    if (isValidationFunctionArray(argSecond)) {
-      validators = argSecond
-    }
-  } else if (isValidationFunctionArray(argFirst)) {
-    validators = argFirst
   }
 
-  return new ArrayField(label, defaultValue, nullable, validators)
+  return new ArrayField(label, baseField, defaultValue, initialLength, nullable, validators)
+}
+
+export function fieldSet<P extends boolean = false>(rawFields: any, defaultValue: any, nullable: P): FieldSet<any, P> {
+  return new FieldSet(rawFields, '', defaultValue, nullable)
 }

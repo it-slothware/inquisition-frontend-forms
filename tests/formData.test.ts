@@ -1,4 +1,4 @@
-import { FormDefinition, booleanField, charField, numberField, dateTimeField } from '../src'
+import { FormDefinition, booleanField, charField, numberField, dateTimeField, arrayField } from '../src'
 
 describe('Form tester', () => {
   beforeEach(() => {
@@ -23,6 +23,8 @@ describe('Form tester', () => {
       createdAt: dateTimeField(new Date(2024, 4, 4, 12, 31, 44)),
       modifiedAt: dateTimeField(),
       deletedAt: dateTimeField(null, true),
+      listOfNulls: arrayField(numberField(null, true), 3),
+      listOfObjectWithNulls: arrayField({ id: numberField(null, true) }, 2),
     })
 
     const form = formDefinition.new()
@@ -39,6 +41,24 @@ describe('Form tester', () => {
       createdAt: new Date(2024, 4, 4, 12, 31, 44),
       modifiedAt: new Date(2024, 4, 5, 18, 44, 23),
       deletedAt: null,
+      listOfNulls: [null, null, null],
+      listOfObjectWithNulls: [{ id: null }, { id: null }],
     })
+  })
+
+  test('Adding related', () => {
+    const formDefinition = new FormDefinition({
+      thisIsARelated: arrayField(numberField(42)),
+      sub: arrayField({
+        foobar: arrayField(numberField()),
+      }),
+    })
+    const form = formDefinition.new()
+    expect(form.data.value).toStrictEqual({ thisIsARelated: [] })
+    form.pushRelated('thisIsARelated')
+    form.pushRelated('sub')
+    form.pushRelated('sub.0.foobar')
+    form.pushRelated('foobar')
+    expect(form.data.value).toStrictEqual({ thisIsARelated: [42] })
   })
 })

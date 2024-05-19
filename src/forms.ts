@@ -42,26 +42,48 @@ type ArrayFieldNames<T> = {
   [K in keyof T]: T[K] extends FieldBase<any, any>
     ? T[K] extends ArrayField<any, any>
       ? (K & string) | `${K & string}.${ArrayFieldAccessors<T[K]>}`
-      : 'NOTARRAY'
+      : never
     : T[K] extends FieldSetRaw
       ? `${K & string}.${ArrayFieldNames<T[K]>}`
       : never
 }[keyof T]
 
 type GetReturnTypeIfFunction<T> = T extends (...args: any[]) => any ? ReturnType<T> : never
+// type DataTypeFromFormFieldSetRaw<T extends readonly unknown[], K extends FieldSetRaw> = T['length'] extends 1
+//   ? T[0] extends keyof K
+//     ? GetReturnTypeIfFunction<K[T[0]]['getDefault']>[number]
+//     : never
+//   : T extends [infer R, ...infer P]
+//     ? R extends keyof K & string
+//       ? K[R] extends FieldSetRaw
+//         ? DataTypeFromFormFieldSetRaw<P, K[R]>
+//         : K[R] extends ArrayField<any, any>
+//           ? K[R]['baseField'] extends FieldSetRaw
+//             ? DataTypeFromFormFieldSetRaw<P, K[R]['baseField']>
+//             : GetReturnTypeIfFunction<K[R]['getDefault']>[number]
+//           : K[R]
+//       : never
+//     : never
+
+type DataTypeFromArrayField<T extends readonly unknown[], K extends ArrayField<any, any>> = T['length'] extends 1
+  ? GetReturnTypeIfFunction<K['getDefault']>
+  : K extends ArrayField<infer R, any>
+    ? R extends FieldBase<any, any>
+      ? R extends ArrayField<any, any>
+        ? DataTypeFromArrayField<[], R>
+        : GetReturnTypeIfFunction<R['getDefault']>[number]
+      : never
+    : never
+
 type DataTypeFromFormFieldSetRaw<T extends readonly unknown[], K extends FieldSetRaw> = T['length'] extends 1
   ? T[0] extends keyof K
     ? GetReturnTypeIfFunction<K[T[0]]['getDefault']>[number]
     : never
-  : T extends [infer R, ...infer P]
-    ? R extends keyof K & string
-      ? K[R] extends FieldSetRaw
-        ? DataTypeFromFormFieldSetRaw<P, K[R]>
-        : K[R] extends ArrayField<any, any>
-          ? K[R]['baseField'] extends FieldSetRaw
-            ? DataTypeFromFormFieldSetRaw<P, K[R]['baseField']>
-            : object
-          : K[R]
+  : T extends [infer A, ...infer B]
+    ? A extends keyof K & string
+      ? K[A] extends ArrayField<any, any>
+        ? DataTypeFromArrayField<[...B], K[A]>
+        : string
       : never
     : never
 

@@ -49,16 +49,265 @@ describe('Form tester', () => {
   test('Adding related', () => {
     const formDefinition = new FormDefinition({
       thisIsARelated: arrayField(numberField(42)),
-      sub: arrayField({
-        foobar: arrayField(numberField()),
-      }),
     })
     const form = formDefinition.new()
     expect(form.data.value).toStrictEqual({ thisIsARelated: [] })
     form.pushRelated('thisIsARelated')
-    form.pushRelated('sub')
-    form.pushRelated('sub.0.foobar')
-    form.pushRelated('foobar')
     expect(form.data.value).toStrictEqual({ thisIsARelated: [42] })
+  })
+
+  test('Adding related with nested object', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField({
+        inner: arrayField(numberField()),
+      }),
+    })
+    const form = formDefinition.new()
+    expect(form.data.value).toStrictEqual({ outer: [] })
+    form.pushRelated('outer')
+    expect(form.data.value).toStrictEqual({ outer: [{ inner: [] }] })
+  })
+
+  test('Adding related with nested object with default', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField({
+        inner: arrayField(numberField()),
+      }),
+    })
+    const form = formDefinition.new()
+    expect(form.data.value).toStrictEqual({ outer: [] })
+    form.pushRelated('outer', { inner: [13] })
+    expect(form.data.value).toStrictEqual({ outer: [{ inner: [13] }] })
+  })
+
+  test('Adding nested object', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField(
+        {
+          inner: arrayField(numberField()),
+        },
+        1,
+      ),
+    })
+    const form = formDefinition.new()
+    expect(form.data.value).toStrictEqual({ outer: [{ inner: [] }] })
+    form.pushRelated('outer.0.inner', 0)
+    expect(form.data.value).toStrictEqual({ outer: [{ inner: [0] }] })
+  })
+
+  test('Adding nested object with default', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField(
+        {
+          inner: arrayField(numberField()),
+        },
+        1,
+      ),
+    })
+    const form = formDefinition.new()
+    expect(form.data.value).toStrictEqual({ outer: [{ inner: [] }] })
+    // form.pushRelated('outer.0.inner', 0, 42)
+    expect(1).toBe(2)
+    expect(form.data.value).toStrictEqual({ outer: [{ inner: [42] }] })
+  })
+})
+
+describe('Form push related', () => {
+  // const formDefinition = new FormDefinition({
+  //   arrayOnly: arrayField(numberField()),
+  //   nestedArrayOnly: arrayField(arrayField(numberField())),
+  //   nestedArrayOnlyMultiple: arrayField(arrayField(arrayField(arrayField(numberField())))),
+  //   arrayOfObjects: arrayField({ id: numberField(), name: charField() }),
+  //   arrayOfObjectWithArray: arrayField({ urls: arrayField(charField()) }),
+  // })
+
+  describe('Array of values', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField(numberField()),
+    })
+    let form: ReturnType<typeof formDefinition.new>
+
+    beforeEach(() => {
+      form = formDefinition.new()
+    })
+
+    test('Default value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      form.pushRelated('outer')
+      expect(form.data.value.outer).toStrictEqual([0])
+    })
+
+    test('Custom value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      form.pushRelated('outer', 42)
+      expect(form.data.value.outer).toStrictEqual([42])
+    })
+  })
+
+  describe('Array of array of values', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField(arrayField(numberField())),
+    })
+    let form: ReturnType<typeof formDefinition.new>
+
+    beforeEach(() => {
+      form = formDefinition.new()
+    })
+
+    test('Default value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      form.pushRelated('outer')
+      expect(form.data.value.outer).toStrictEqual([[]])
+      form.pushRelated('outer.0', 0)
+      expect(form.data.value.outer).toStrictEqual([[0]])
+    })
+
+    test('Custom value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      // form.pushRelated('outer', [12, 34])
+      // form.pushRelated('arrayOnly.0', 0, 4)
+      expect(1).toBe(2)
+      expect(form.data.value.outer).toStrictEqual([[12, 34, 4]])
+    })
+  })
+
+  describe('Array of array of array of values', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField(arrayField(arrayField(numberField()))),
+    })
+    let form: ReturnType<typeof formDefinition.new>
+
+    beforeEach(() => {
+      form = formDefinition.new()
+    })
+
+    test('Default value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      form.pushRelated('outer')
+      expect(form.data.value.outer).toStrictEqual([[]])
+      form.pushRelated('outer.0', 0)
+      expect(form.data.value.outer).toStrictEqual([[[]]])
+      form.pushRelated('outer.0.0', 0, 0)
+      expect(form.data.value.outer).toStrictEqual([[[0]]])
+    })
+
+    test('Custom value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      // form.pushRelated('arrayOnly', 42)
+      expect(1).toBe(2)
+      expect(form.data.value.outer).toStrictEqual([42])
+    })
+  })
+
+  describe('Array of objects', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField({ id: numberField() }),
+    })
+    let form: ReturnType<typeof formDefinition.new>
+
+    beforeEach(() => {
+      form = formDefinition.new()
+    })
+
+    test('Default value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      form.pushRelated('outer')
+      expect(form.data.value.outer).toStrictEqual([{ id: 0 }])
+    })
+
+    test('Custom value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      // form.pushRelated('arrayOnly', 42)
+      expect(1).toBe(2)
+      expect(form.data.value.outer).toStrictEqual([42])
+    })
+  })
+
+  describe('Array of objects with array key', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField({ urls: arrayField(charField()) }),
+    })
+    let form: ReturnType<typeof formDefinition.new>
+
+    beforeEach(() => {
+      form = formDefinition.new()
+    })
+
+    test('Default value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      form.pushRelated('outer')
+      expect(form.data.value.outer).toStrictEqual([{ urls: [] }])
+      form.pushRelated('outer.0.urls', 0)
+      expect(form.data.value.outer).toStrictEqual([{ urls: [''] }])
+    })
+
+    test('Custom value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      // form.pushRelated('arrayOnly', 42)
+      expect(1).toBe(2)
+      expect(form.data.value.outer).toStrictEqual([42])
+    })
+  })
+
+  describe('Array of objects with array of array of values', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField({ iDontKnow: arrayField(arrayField(numberField())) }),
+    })
+    let form: ReturnType<typeof formDefinition.new>
+
+    beforeEach(() => {
+      form = formDefinition.new()
+    })
+
+    test('Default value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      form.pushRelated('outer')
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: [] }])
+      form.pushRelated('outer.0.iDontKnow', 0)
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: [[]] }])
+      form.pushRelated('outer.0.iDontKnow.0', 0, 0)
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: [[0]] }])
+    })
+
+    test('Custom value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      // form.pushRelated('arrayOnly', 42)
+      expect(1).toBe(2)
+      expect(form.data.value.outer).toStrictEqual([42])
+    })
+  })
+
+  describe('Really nested data. Has no idea how to name it', () => {
+    const formDefinition = new FormDefinition({
+      outer: arrayField({
+        iDontKnow: { middle: arrayField(arrayField({ deepInner: arrayField(arrayField(numberField())) })) },
+      }),
+    })
+    let form: ReturnType<typeof formDefinition.new>
+
+    beforeEach(() => {
+      form = formDefinition.new()
+    })
+
+    test('Default value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      form.pushRelated('outer')
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: { middle: [] } }])
+      form.pushRelated('outer.0.iDontKnow.middle', 0)
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: { middle: [[]] } }])
+      form.pushRelated('outer.0.iDontKnow.middle.0', 0, 0)
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: { middle: [[{ deepInner: [] }]] } }])
+      form.pushRelated('outer.0.iDontKnow.middle.0.0.deepInner', 0, 0, 0)
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: { middle: [[{ deepInner: [[]] }]] } }])
+      form.pushRelated('outer.0.iDontKnow.middle.0.0.deepInner.0', 0, 0, 0, 0)
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: { middle: [[{ deepInner: [[0]] }]] } }])
+    })
+
+    test('Custom value', () => {
+      expect(form.data.value.outer).toStrictEqual([])
+      // form.pushRelated('arrayOnly', 42)
+      expect(1).toBe(2)
+      expect(form.data.value.outer).toStrictEqual([42])
+    })
   })
 })

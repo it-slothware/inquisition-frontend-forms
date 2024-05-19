@@ -29,20 +29,23 @@ export type FlattenedErrors = Record<string, ErrorList>
 
 export type CallbackFunction = (success: boolean) => void
 
-// type ArrayFieldNames<T> = {
-//   [K in keyof T]: T[K] extends ArrayField<infer R, any>
-//     ? R extends FieldBase<any, any>
-//       ? K
-//       : R extends FieldSetRaw
-//         ? K | `${K & string}.0.${ArrayFieldNames<R> & string}`
-//         : never
-//     : T[K] extends FieldSetRaw
-//       ? `${K & string}.${ArrayFieldNames<T[K]> & string}`
-//       : never
-// }[keyof T]
+type ArrayFieldAccessors<T extends ArrayField<any, any>> =
+  T extends ArrayField<infer R, any>
+    ? R extends FieldBase<any, any>
+      ? R extends ArrayField<any, any>
+        ? '0' | `0.${ArrayFieldAccessors<R>}`
+        : '0'
+      : '0' | `0.${ArrayFieldNames<R>}`
+    : never
 
 type ArrayFieldNames<T> = {
-  [K in keyof T]: string
+  [K in keyof T]: T[K] extends FieldBase<any, any>
+    ? T[K] extends ArrayField<any, any>
+      ? (K & string) | `${K & string}.${ArrayFieldAccessors<T[K]>}`
+      : 'NOTARRAY'
+    : T[K] extends FieldSetRaw
+      ? `${K & string}.${ArrayFieldNames<T[K]>}`
+      : never
 }[keyof T]
 
 type GetReturnTypeIfFunction<T> = T extends (...args: any[]) => any ? ReturnType<T> : never
@@ -167,12 +170,17 @@ export class Form<FS extends FieldSetRaw> {
   }
 
   getRelated<T extends ArrayFieldNames<FS>>(relatedName: T): DataTypeFromFormFieldSetRaw<Split<T, '.'>, FS> {
-    const relatedAccessors = relatedName.split('.').filter((ra) => ra !== '0')
+    const relatedAccessors = relatedName.split('.')
 
     let relatedField: FieldBase<any, any> = this.definition.fieldSet
     relatedAccessors.forEach((ra) => {
-      if (isArrayField(relatedField) && isFormFieldSet(relatedField.baseField)) {
-        relatedField = relatedField.baseField
+      if (isArrayField(relatedField)) {
+        if (isFormFieldSet(relatedField.baseField)) {
+          if (ra === '0') return
+          relatedField = relatedField.baseField
+        } else if (ra === '0' && isArrayField(relatedField.baseField)) {
+          relatedField = relatedField.baseField
+        }
       }
       if (isFormFieldSet(relatedField)) relatedField = relatedField.fieldSetRoot[ra]
     })

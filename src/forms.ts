@@ -27,8 +27,6 @@ export type FormWithExtraMethods<F extends Form<any>, EMD extends FormExtraMetho
 
 export type FlattenedErrors = Record<string, ErrorList>
 
-export type CallbackFunction = (success: boolean) => void
-
 type ArrayFieldAccessors<T extends ArrayField<any, any>> =
   T extends ArrayField<infer R, any>
     ? R extends FieldBase<any, any>

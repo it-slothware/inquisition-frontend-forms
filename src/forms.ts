@@ -199,7 +199,7 @@ export class Form<FS extends FieldSetRaw> {
     const expectedIndexCount = (relatedName.match(/\.0/g) || []).length
 
     let data
-    if (expectedIndexCount > args.length) {
+    if (expectedIndexCount < args.length) {
       data = args.at(-1) as DataTypeFromFormFieldSetRaw<Split<T, '.'>, FS>
     } else {
       data = this.getRelated(relatedName)

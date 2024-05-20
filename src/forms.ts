@@ -220,10 +220,9 @@ export class Form<FS extends FieldSetRaw> {
     }
 
     let foundIndexes = 0
-    // TODO fix this any maybe if too much time or bored or anything
-    let pushTarget = this.data.value as any
+    let pushTarget: any = this.data.value
     relatedName.split('.').forEach((p) => {
-      let key
+      let key: any
       if (p !== '0') key = p
       else {
         foundIndexes += 1
@@ -235,21 +234,21 @@ export class Form<FS extends FieldSetRaw> {
 
     return data
   }
-  //
-  // removeRelated<T extends ArrayFieldNames<FS>>(relatedName: T, ...args: RelatedLookupIndexes<T>) {
-  //   const indexes = args as number[]
-  //   let foundIndexes = 0
-  //   let removeTarget = this.data.value as any
-  //   relatedName.split('.').forEach((p) => {
-  //     let key
-  //     if (p !== '0') key = p
-  //     else {
-  //       foundIndexes += 1
-  //       key = indexes[foundIndexes - 1]
-  //     }
-  //     removeTarget = removeTarget[key]
-  //   })
-  //
-  //   removeTarget.splice(indexes[foundIndexes], 1)
-  // }
+
+  removeRelated<T extends ArrayFieldNames<FS>>(relatedName: T, ...args: RelatedLookupIndexes<T>) {
+    const indexes = args as number[]
+    let foundIndexes = 0
+    let removeTarget: any = this.data.value
+    relatedName.split('.').forEach((p) => {
+      let key: any
+      if (p !== '0') key = p
+      else {
+        foundIndexes += 1
+        key = indexes[foundIndexes - 1]
+      }
+      removeTarget = removeTarget[key]
+    })
+
+    removeTarget.splice(indexes[foundIndexes], 1)
+  }
 }

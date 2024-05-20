@@ -4,7 +4,7 @@
   "description": "Inquisition Form Data handler",
   "main": "index.js",
   "scripts": {
-    "build": "tsup",
+    "build": "tsc",
     "test": "jest",
     "format": "npx prettier --write ./src"
   },

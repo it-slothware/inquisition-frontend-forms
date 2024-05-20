@@ -45,82 +45,9 @@ describe('Form tester', () => {
       listOfObjectWithNulls: [{ id: null }, { id: null }],
     })
   })
-
-  test('Adding related', () => {
-    const formDefinition = new FormDefinition({
-      thisIsARelated: arrayField(numberField(42)),
-    })
-    const form = formDefinition.new()
-    expect(form.data.value).toStrictEqual({ thisIsARelated: [] })
-    form.pushRelated('thisIsARelated')
-    expect(form.data.value).toStrictEqual({ thisIsARelated: [42] })
-  })
-
-  test('Adding related with nested object', () => {
-    const formDefinition = new FormDefinition({
-      outer: arrayField({
-        inner: arrayField(numberField()),
-      }),
-    })
-    const form = formDefinition.new()
-    expect(form.data.value).toStrictEqual({ outer: [] })
-    form.pushRelated('outer')
-    expect(form.data.value).toStrictEqual({ outer: [{ inner: [] }] })
-  })
-
-  test('Adding related with nested object with default', () => {
-    const formDefinition = new FormDefinition({
-      outer: arrayField({
-        inner: arrayField(numberField()),
-      }),
-    })
-    const form = formDefinition.new()
-    expect(form.data.value).toStrictEqual({ outer: [] })
-    form.pushRelated('outer', { inner: [13] })
-    expect(form.data.value).toStrictEqual({ outer: [{ inner: [13] }] })
-  })
-
-  test('Adding nested object', () => {
-    const formDefinition = new FormDefinition({
-      outer: arrayField(
-        {
-          inner: arrayField(numberField()),
-        },
-        1,
-      ),
-    })
-    const form = formDefinition.new()
-    expect(form.data.value).toStrictEqual({ outer: [{ inner: [] }] })
-    form.pushRelated('outer.0.inner', 0)
-    expect(form.data.value).toStrictEqual({ outer: [{ inner: [0] }] })
-  })
-
-  test('Adding nested object with default', () => {
-    const formDefinition = new FormDefinition({
-      outer: arrayField(
-        {
-          inner: arrayField(numberField()),
-        },
-        1,
-      ),
-    })
-    const form = formDefinition.new()
-    expect(form.data.value).toStrictEqual({ outer: [{ inner: [] }] })
-    // form.pushRelated('outer.0.inner', 0, 42)
-    expect(1).toBe(2)
-    expect(form.data.value).toStrictEqual({ outer: [{ inner: [42] }] })
-  })
 })
 
 describe('Form push related', () => {
-  // const formDefinition = new FormDefinition({
-  //   arrayOnly: arrayField(numberField()),
-  //   nestedArrayOnly: arrayField(arrayField(numberField())),
-  //   nestedArrayOnlyMultiple: arrayField(arrayField(arrayField(arrayField(numberField())))),
-  //   arrayOfObjects: arrayField({ id: numberField(), name: charField() }),
-  //   arrayOfObjectWithArray: arrayField({ urls: arrayField(charField()) }),
-  // })
-
   describe('Array of values', () => {
     const formDefinition = new FormDefinition({
       outer: arrayField(numberField()),
@@ -164,9 +91,9 @@ describe('Form push related', () => {
 
     test('Custom value', () => {
       expect(form.data.value.outer).toStrictEqual([])
-      // form.pushRelated('outer', [12, 34])
-      // form.pushRelated('arrayOnly.0', 0, 4)
-      expect(1).toBe(2)
+      form.pushRelated('outer', [12, 34])
+      expect(form.data.value.outer).toStrictEqual([[12, 34]])
+      form.pushRelated('outer.0', 0, 4)
       expect(form.data.value.outer).toStrictEqual([[12, 34, 4]])
     })
   })
@@ -193,9 +120,10 @@ describe('Form push related', () => {
 
     test('Custom value', () => {
       expect(form.data.value.outer).toStrictEqual([])
-      // form.pushRelated('arrayOnly', 42)
-      expect(1).toBe(2)
-      expect(form.data.value.outer).toStrictEqual([42])
+      form.pushRelated('outer', [[55]])
+      form.pushRelated('outer.0', 0, [12])
+      form.pushRelated('outer.0.0', 0, 1, 3)
+      expect(form.data.value.outer).toStrictEqual([[[55], [12, 3]]])
     })
   })
 
@@ -217,9 +145,8 @@ describe('Form push related', () => {
 
     test('Custom value', () => {
       expect(form.data.value.outer).toStrictEqual([])
-      // form.pushRelated('arrayOnly', 42)
-      expect(1).toBe(2)
-      expect(form.data.value.outer).toStrictEqual([42])
+      form.pushRelated('outer', { id: 12 })
+      expect(form.data.value.outer).toStrictEqual([{ id: 12 }])
     })
   })
 
@@ -243,9 +170,10 @@ describe('Form push related', () => {
 
     test('Custom value', () => {
       expect(form.data.value.outer).toStrictEqual([])
-      // form.pushRelated('arrayOnly', 42)
-      expect(1).toBe(2)
-      expect(form.data.value.outer).toStrictEqual([42])
+      form.pushRelated('outer', { urls: [] })
+      expect(form.data.value.outer).toStrictEqual([{ urls: [] }])
+      form.pushRelated('outer.0.urls', 0, 'this is an url')
+      expect(form.data.value.outer).toStrictEqual([{ urls: ['this is an url'] }])
     })
   })
 
@@ -271,9 +199,12 @@ describe('Form push related', () => {
 
     test('Custom value', () => {
       expect(form.data.value.outer).toStrictEqual([])
-      // form.pushRelated('arrayOnly', 42)
-      expect(1).toBe(2)
-      expect(form.data.value.outer).toStrictEqual([42])
+      form.pushRelated('outer', { iDontKnow: [] })
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: [] }])
+      form.pushRelated('outer.0.iDontKnow', 0, [12])
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: [[12]] }])
+      form.pushRelated('outer.0.iDontKnow.0', 0, 0, 55)
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: [[12, 55]] }])
     })
   })
 
@@ -305,9 +236,20 @@ describe('Form push related', () => {
 
     test('Custom value', () => {
       expect(form.data.value.outer).toStrictEqual([])
-      // form.pushRelated('arrayOnly', 42)
-      expect(1).toBe(2)
-      expect(form.data.value.outer).toStrictEqual([42])
+      form.pushRelated('outer', { iDontKnow: { middle: [] } })
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: { middle: [] } }])
+      form.pushRelated('outer.0.iDontKnow.middle', 0, [{ deepInner: [] }])
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: { middle: [[{ deepInner: [] }]] } }])
+      form.pushRelated('outer.0.iDontKnow.middle.0', 0, 0, { deepInner: [] })
+      expect(form.data.value.outer).toStrictEqual([{ iDontKnow: { middle: [[{ deepInner: [] }, { deepInner: [] }]] } }])
+      form.pushRelated('outer.0.iDontKnow.middle.0.0.deepInner', 0, 0, 0, [12])
+      expect(form.data.value.outer).toStrictEqual([
+        { iDontKnow: { middle: [[{ deepInner: [[12]] }, { deepInner: [] }]] } },
+      ])
+      form.pushRelated('outer.0.iDontKnow.middle.0.0.deepInner.0', 0, 0, 0, 0, 33)
+      expect(form.data.value.outer).toStrictEqual([
+        { iDontKnow: { middle: [[{ deepInner: [[12, 33]] }, { deepInner: [] }]] } },
+      ])
     })
   })
 })

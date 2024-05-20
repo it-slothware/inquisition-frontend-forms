@@ -32,8 +32,8 @@ type ArrayFieldAccessors<T extends ArrayField<any, any>> =
     ? R extends FieldBase<any, any>
       ? R extends ArrayField<any, any>
         ? '0' | `0.${ArrayFieldAccessors<R>}`
-        : '0'
-      : '0' | `0.${ArrayFieldNames<R>}`
+        : never
+      : `0.${ArrayFieldNames<R>}`
     : never
 
 type ArrayFieldNames<T> = {
@@ -47,29 +47,21 @@ type ArrayFieldNames<T> = {
 }[keyof T]
 
 type GetReturnTypeIfFunction<T> = T extends (...args: any[]) => any ? ReturnType<T> : never
-// type DataTypeFromFormFieldSetRaw<T extends readonly unknown[], K extends FieldSetRaw> = T['length'] extends 1
-//   ? T[0] extends keyof K
-//     ? GetReturnTypeIfFunction<K[T[0]]['getDefault']>[number]
-//     : never
-//   : T extends [infer R, ...infer P]
-//     ? R extends keyof K & string
-//       ? K[R] extends FieldSetRaw
-//         ? DataTypeFromFormFieldSetRaw<P, K[R]>
-//         : K[R] extends ArrayField<any, any>
-//           ? K[R]['baseField'] extends FieldSetRaw
-//             ? DataTypeFromFormFieldSetRaw<P, K[R]['baseField']>
-//             : GetReturnTypeIfFunction<K[R]['getDefault']>[number]
-//           : K[R]
-//       : never
-//     : never
+type InferBaseFromArrayField<T extends ArrayField<any, any>> = T extends ArrayField<infer R, any> ? R : never
 
 type DataTypeFromArrayField<T extends readonly unknown[], K extends ArrayField<any, any>> = T['length'] extends 1
-  ? GetReturnTypeIfFunction<K['getDefault']>
-  : K extends ArrayField<infer R, any>
-    ? R extends FieldBase<any, any>
-      ? R extends ArrayField<any, any>
-        ? DataTypeFromArrayField<[], R>
-        : GetReturnTypeIfFunction<R['getDefault']>[number]
+  ? T extends ['0']
+    ? GetReturnTypeIfFunction<InferBaseFromArrayField<K>['getDefault']>[number]
+    : never
+  : T extends [infer A, ...infer B]
+    ? K extends ArrayField<infer R, any>
+      ? R extends FieldBase<any, any>
+        ? R extends ArrayField<any, any>
+          ? DataTypeFromArrayField<[...B], R>
+          : GetReturnTypeIfFunction<R['getDefault']>[number]
+        : R extends FieldSetRaw
+          ? DataTypeFromFormFieldSetRaw<[...B], R>
+          : never
       : never
     : never
 
@@ -81,7 +73,9 @@ type DataTypeFromFormFieldSetRaw<T extends readonly unknown[], K extends FieldSe
     ? A extends keyof K & string
       ? K[A] extends ArrayField<any, any>
         ? DataTypeFromArrayField<[...B], K[A]>
-        : string
+        : K[A] extends FieldSetRaw
+          ? DataTypeFromFormFieldSetRaw<[...B], K[A]>
+          : never
       : never
     : never
 

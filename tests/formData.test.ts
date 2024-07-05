@@ -50,14 +50,14 @@ describe('Form tester', () => {
     const formDefinition = new FormDefinition({
       thisIsARelated: arrayField(numberField(42)),
       sub: arrayField({
-        foobar: arrayField(numberField()),
+        subInner: arrayField(numberField()),
       }),
     })
     const form = formDefinition.new()
-    expect(form.data.value).toStrictEqual({ thisIsARelated: [] })
+    expect(form.data.value).toStrictEqual({ thisIsARelated: [], sub: [] })
     form.pushRelated('thisIsARelated')
     form.pushRelated('sub')
-    form.pushRelated('sub.0.foobar')
+    form.pushRelated('sub.0.subInner', 0)
     form.pushRelated('foobar')
     expect(form.data.value).toStrictEqual({ thisIsARelated: [42] })
   })

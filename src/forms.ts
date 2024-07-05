@@ -41,8 +41,12 @@ export type CallbackFunction = (success: boolean) => void
 //       : never
 // }[keyof T]
 
-type ArrayFieldNames<T> = {
-  [K in keyof T]: string
+type ArrayFieldNames<T extends FieldSetRaw> = {
+  [K in keyof T]: T[K] extends FieldSetRaw
+    ? `${K & string}.${ArrayFieldNames<T[K]> & string}`
+    : T[K] extends ArrayField<any, any>
+      ? `${K & string}.0.`
+      : never
 }[keyof T]
 
 type GetReturnTypeIfFunction<T> = T extends (...args: any[]) => any ? ReturnType<T> : never

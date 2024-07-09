@@ -42,10 +42,26 @@ export type FormWithExtraMethods<F extends Form<any>, EMD extends FormExtraMetho
 
 export type FlattenedErrors = Record<string, ErrorList>
 
-type ArrayFieldNamesFromArrayField<T extends any> = null
+type ArrayFieldNamesFromArrayField<T extends ArrayField<any, any>, C extends unknown[]> = C extends [...infer CR, any]
+  ? T extends ArrayField<infer R, any>
+    ? R extends FieldSetRaw
+      ? `0.${ArrayFieldNamesFromFieldSetRaw<R, CR> & string}`
+      : R extends FieldBase<any, any>
+        ? R extends ArrayField<any, any>
+          ? '0' | `0.${ArrayFieldNamesFromArrayField<R, CR> & string}`
+          : never
+        : never
+    : never
+  : never
 
 type ArrayFieldNamesFromFieldSetRaw<T extends FieldSetRaw, C extends unknown[]> = {
-  [K in keyof T]: C extends [...any, any] ? (T[K] extends ArrayField<any, any> ? K : never) : never
+  [K in keyof T]: C extends [...infer CR, any]
+    ? T[K] extends FieldSetRaw
+      ? `${K & string}.${ArrayFieldNamesFromFieldSetRaw<T[K], CR>}`
+      : T[K] extends ArrayField<any, any>
+        ? `${K & string}` | `${K & string}.${ArrayFieldNamesFromArrayField<T[K], CR>}`
+        : never
+    : never
 }[keyof T]
 
 type ArrayFieldNames<FS extends FieldSetRaw, D extends number = 15> = ArrayFieldNamesFromFieldSetRaw<

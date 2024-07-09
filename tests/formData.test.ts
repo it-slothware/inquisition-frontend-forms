@@ -247,8 +247,9 @@ describe('Form push related', () => {
         { iDontKnow: { middle: [[{ deepInner: [[12]] }, { deepInner: [] }]] } },
       ])
       form.pushRelated('outer.0.iDontKnow.middle.0.0.deepInner.0', 0, 0, 0, 0, 33)
+      form.pushRelated('outer.0.iDontKnow.middle.0.0.deepInner', 0, 0, 1, [42])
       expect(form.data.value.outer).toStrictEqual([
-        { iDontKnow: { middle: [[{ deepInner: [[12, 33]] }, { deepInner: [] }]] } },
+        { iDontKnow: { middle: [[{ deepInner: [[12, 33]] }, { deepInner: [[42]] }]] } },
       ])
     })
   })

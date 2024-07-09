@@ -12,6 +12,21 @@ import {
   isArrayField,
   isFormFieldSet,
 } from './fields'
+import type { Add, CreateArrayOfLength, Subtract } from './types'
+
+type Split<S extends string, D extends string> = string extends S
+  ? string[]
+  : S extends ''
+    ? []
+    : S extends `${infer T}${D}${infer U}`
+      ? [T, ...Split<U, D>]
+      : [S]
+
+type CountOfSubString<
+  T extends string,
+  S extends string,
+  C extends unknown[] = [],
+> = T extends `${string}${S}${infer R}` ? CountOfSubString<R, S, [1, ...C]> : C['length']
 
 export type FormExtraMethod<T> = (this: T, ...args: any[]) => any
 export type FormExtraMethodsDefinition<F extends Form<any>> = {
@@ -27,24 +42,16 @@ export type FormWithExtraMethods<F extends Form<any>, EMD extends FormExtraMetho
 
 export type FlattenedErrors = Record<string, ErrorList>
 
-type ArrayFieldAccessors<T extends ArrayField<any, any>> =
-  T extends ArrayField<infer R, any>
-    ? R extends FieldBase<any, any>
-      ? R extends ArrayField<any, any>
-        ? '0' | `0.${ArrayFieldAccessors<R>}`
-        : never
-      : `0.${ArrayFieldNames<R>}`
-    : never
+type ArrayFieldNamesFromArrayField<T extends any> = null
 
-type ArrayFieldNames<T> = {
-  [K in keyof T]: T[K] extends FieldBase<any, any>
-    ? T[K] extends ArrayField<any, any>
-      ? (K & string) | `${K & string}.${ArrayFieldAccessors<T[K]>}`
-      : never
-    : T[K] extends FieldSetRaw
-      ? `${K & string}.${ArrayFieldNames<T[K]>}`
-      : never
+type ArrayFieldNamesFromFieldSetRaw<T extends FieldSetRaw, C extends unknown[]> = {
+  [K in keyof T]: C extends [...any, any] ? (T[K] extends ArrayField<any, any> ? K : never) : never
 }[keyof T]
+
+type ArrayFieldNames<FS extends FieldSetRaw, D extends number = 15> = ArrayFieldNamesFromFieldSetRaw<
+  FS,
+  CreateArrayOfLength<D>
+>
 
 type GetReturnTypeIfFunction<T> = T extends (...args: any[]) => any ? ReturnType<T> : never
 type InferBaseFromArrayField<T extends ArrayField<any, any>> = T extends ArrayField<infer R, any> ? R : never
@@ -53,7 +60,7 @@ type DataTypeFromArrayField<T extends readonly unknown[], K extends ArrayField<a
   ? T extends ['0']
     ? GetReturnTypeIfFunction<InferBaseFromArrayField<K>['getDefault']>[number]
     : never
-  : T extends [infer A, ...infer B]
+  : T extends [any, ...infer B]
     ? K extends ArrayField<infer R, any>
       ? R extends FieldBase<any, any>
         ? R extends ArrayField<any, any>
@@ -79,29 +86,12 @@ type DataTypeFromFormFieldSetRaw<T extends readonly unknown[], K extends FieldSe
       : never
     : never
 
-type Split<S extends string, D extends string> = string extends S
-  ? string[]
-  : S extends ''
-    ? []
-    : S extends `${infer T}${D}${infer U}`
-      ? [T, ...Split<U, D>]
-      : [S]
-
-type CountOfSubString<
-  T extends string,
-  S extends string,
-  C extends unknown[] = [],
-> = T extends `${string}${S}${infer R}` ? CountOfSubString<R, S, [1, ...C]> : C['length']
-type NPlusOne<T extends number, C extends unknown[] = []> = C['length'] extends T
-  ? [...C, 1]['length']
-  : NPlusOne<T, [...C, 1]>
-
 type IndexArray<T, K extends any[] = []> = K['length'] extends T ? K : IndexArray<T, [...K, number]>
 type PushRelatedArguments<T extends string, FS extends FieldSetRaw> = [
   ...IndexArray<CountOfSubString<T, '.0'>>,
   DataTypeFromFormFieldSetRaw<Split<T, '.'>, FS>?,
 ]
-export type RelatedLookupIndexes<T extends string> = IndexArray<NPlusOne<CountOfSubString<T, '.0'>>>
+export type RelatedLookupIndexes<T extends string> = IndexArray<Add<CountOfSubString<T, '.0'>>>
 
 export class FormDefinition<FS extends FieldSetRaw, EMD extends FormExtraMethodsDefinition<Form<FS>>> {
   readonly fieldSet: FieldSet<FS>

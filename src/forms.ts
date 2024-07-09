@@ -227,6 +227,7 @@ export class Form<FS extends FieldSetRaw> {
 
     let foundIndexes = 0
     let pushTarget: any = this.data.value
+    const traversedKey: string[] = []
     relatedName.split('.').forEach((p) => {
       let key: any
       if (p !== '0') key = p
@@ -235,6 +236,13 @@ export class Form<FS extends FieldSetRaw> {
         key = args[foundIndexes - 1]
       }
       pushTarget = pushTarget[key]
+      if (pushTarget === undefined) {
+        console.error(
+          `Target is undefined. Possibly a key error during traversal. Traversed key: ${traversedKey.join('.')}`,
+        )
+      } else {
+        traversedKey.push(`${key}`)
+      }
     })
     pushTarget.push(data)
 

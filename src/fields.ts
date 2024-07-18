@@ -9,19 +9,19 @@ export type FormFieldSetRoot<T extends FieldSetRaw> = {
   [key in keyof T]: T[key] extends FieldBase<any, any> ? T[key] : T[key] extends FieldSetRaw ? FieldSet<T[key]> : never
 }
 
-export type FormData<T> = {
+export type FieldSetData<T> = {
   [key in keyof T]: T[key] extends FieldBase<any, any>
     ? ReturnType<T[key]['getDefault']>
     : T[key] extends FieldSetRaw
-      ? FormData<T[key]>
+      ? FieldSetData<T[key]>
       : never
 }
 
 export type ArrayFieldDefault<T extends FieldSetRaw | FieldBase<any, any>> =
-  T extends FieldBase<any, any> ? ReturnType<T['getDefault']> : FormData<T>
+  T extends FieldBase<any, any> ? ReturnType<T['getDefault']> : FieldSetData<T>
 
 type ArrayFieldFromNative<T extends FieldSetRaw | FieldBase<any, any>> =
-  T extends FieldBase<any, any> ? ReturnType<T['fromNative']> : FormData<T>
+  T extends FieldBase<any, any> ? ReturnType<T['fromNative']> : FieldSetData<T>
 
 export type ErrorList = Array<string>
 export type FlattenedErrors = Record<string, ErrorList>
@@ -275,29 +275,33 @@ export class ArrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends b
   }
 }
 
-export class FieldSet<DV extends FieldSetRaw, P extends boolean = false> extends FieldBase<
-  ConditionalNullable<FormData<DV>, P>,
+export type FieldSetDefault<T extends FieldSetRaw, P extends boolean = false> = P extends true
+  ? () => ConditionalNullable<FieldSetData<T>, P>
+  : () => ConditionalNullable<FieldSetData<T>, P>
+
+export class FieldSet<FS extends FieldSetRaw, P extends boolean = false> extends FieldBase<
+  ConditionalNullable<FieldSetData<FS>, P>,
   P
 > {
-  readonly fieldSetRoot: FormFieldSetRoot<DV>
+  readonly fieldSetRoot: FormFieldSetRoot<FS>
 
   constructor(
-    rawFieldSet: DV,
+    rawFieldSet: FS,
     label?: string,
-    defaultValue?: () => ConditionalNullable<FormData<DV>, P>,
+    defaultValue?: FieldSetDefault<FS, P>,
     nullable?: P,
     validators?: FormFieldValidator[],
   ) {
     if (label === undefined) label = ''
     if (defaultValue === undefined) {
-      defaultValue = () => {
+      defaultValue = (() => {
         const defaultData: Record<string, any> = {}
         for (const fieldName of Object.keys(this.fieldSetRoot)) {
           const field = this.fieldSetRoot[fieldName]
           defaultData[fieldName] = field.getDefault()
         }
-        return defaultData as ConditionalNullable<FormData<DV>, P>
-      }
+        return defaultData as ConditionalNullable<FieldSetData<FS>, P>
+      }) as FieldSetDefault<FS, P>
     }
     super(label, defaultValue, nullable, validators)
 
@@ -308,10 +312,10 @@ export class FieldSet<DV extends FieldSetRaw, P extends boolean = false> extends
       else normalizedFieldSetRaw[fieldName] = new FieldSet(field)
     }
 
-    this.fieldSetRoot = normalizedFieldSetRaw as FormFieldSetRoot<DV>
+    this.fieldSetRoot = normalizedFieldSetRaw as FormFieldSetRoot<FS>
   }
 
-  validateFieldSet(data: FormData<DV>): FlattenedErrors {
+  validateFieldSet(data: FieldSetData<FS>): FlattenedErrors {
     const errors: FlattenedErrors = {}
     errors.non_field_errors = this.validate(data)
 
@@ -354,3 +358,9 @@ export function isArrayField(field: FieldBase<any, any> | FieldSetRaw): field is
 export function isFormFieldSet(field: FieldBase<any, any> | FieldSetRaw): field is FieldSet<any> {
   return field instanceof FieldSet
 }
+
+export type InferredFieldType<T> = T extends FieldBase<any, infer R> ? R : never
+
+export type IdTypeFromFieldSet<FS extends FieldSetRaw> = FS extends { id: FieldBase<any> }
+  ? InferredFieldType<FS['id']>
+  : never

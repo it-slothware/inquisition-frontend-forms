@@ -1,15 +1,15 @@
 import { type Ref, ref } from 'vue'
-import { $api } from '@/plugins/axiosPlugin'
-import { type ModelFieldSetRaw, type ModelData, type ModelErrors, ModelFieldSet } from './fields'
-import type { ValidatedModelInterface } from './types'
+import { getAxiosInstance } from '../axios'
+import { type FieldSetRaw, type FieldSetData, type FieldSetErrors, FieldSet } from '../fields'
+import { ValidatedModelInterface } from './types'
 
-export class SingleEndpointModelDefinition<T extends string, FS extends ModelFieldSetRaw> {
+export class SingleEndpointModelDefinition<T extends string, FS extends FieldSetRaw> {
   readonly url: string
-  readonly fieldSet: ModelFieldSet<FS>
+  readonly fieldSet: FieldSet<FS>
 
   constructor(url: T, rawFieldSet: FS) {
     this.url = url
-    this.fieldSet = new ModelFieldSet(rawFieldSet)
+    this.fieldSet = new FieldSet(rawFieldSet)
   }
 
   new(initialData?: Object): SingleEndpointModel<FS> {
@@ -17,23 +17,24 @@ export class SingleEndpointModelDefinition<T extends string, FS extends ModelFie
   }
 }
 
-export class SingleEndpointModel<FS extends ModelFieldSetRaw> implements ValidatedModelInterface {
+export class SingleEndpointModel<FS extends FieldSetRaw> implements ValidatedModelInterface {
   readonly definition: SingleEndpointModelDefinition<string, FS>
-  readonly ref: Ref<ModelData<FS>>
-  readonly errors: Ref<ModelErrors<FS>>
+  readonly ref: Ref<FieldSetData<FS>>
+  readonly errors: Ref<FieldSetErrors<FS>>
 
-  constructor(modelDefinition: SingleEndpointModelDefinition<string, FS>, data: ModelData<FS>) {
+  constructor(modelDefinition: SingleEndpointModelDefinition<string, FS>, data: FieldSetData<FS>) {
     this.definition = modelDefinition
-    this.ref = ref(data) as Ref<ModelData<FS>>
-    this.errors = ref({}) as Ref<ModelData<FS>>
+    this.ref = ref(data) as Ref<FieldSetData<FS>>
+    this.errors = ref({}) as Ref<FieldSetErrors<FS>>
   }
 
   resetValidation() {
-    this.errors.value = {} as ModelErrors<FS>
+    this.errors.value = {} as FieldSetErrors<FS>
   }
 
   get() {
-    return $api.get(`${this.definition.url}`).then(response => {
+    const api = getAxiosInstance()
+    return api.get(`${this.definition.url}`).then((response) => {
       this.ref.value = this.definition.fieldSet.toNative(response.data)
       return this
     })
@@ -41,15 +42,21 @@ export class SingleEndpointModel<FS extends ModelFieldSetRaw> implements Validat
 
   post() {
     const data = this.definition.fieldSet.fromNative(this.ref.value)
-    return $api
+
+    const api = getAxiosInstance()
+    return api
       .post(`${this.definition.url}`, data)
-      .then(response => {
+      .then((response) => {
         this.ref.value = this.definition.fieldSet.toNative(response.data)
         return this
       })
-      .catch(error => {
+      .catch((error) => {
         this.errors.value = error.response.data
         throw error
       })
   }
+}
+
+export function singleEndpointModelDefinition<T extends string, FS extends FieldSetRaw>(url: T, rawFieldSet: FS) {
+  return new SingleEndpointModelDefinition(url, rawFieldSet)
 }

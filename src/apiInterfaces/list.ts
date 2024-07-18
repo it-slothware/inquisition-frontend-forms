@@ -1,17 +1,16 @@
 import { type Ref, ref } from 'vue'
-import { $api } from '@/plugins/axiosPlugin'
+import { getAxiosInstance } from '../axios'
+import { type FieldSetRaw, type FieldSetData, FieldBase, FieldSet } from '../fields'
 
 import { getURLSearchParamsSize } from './utils'
 import { Paginator, DEFAULT_PAGE_SIZE } from './paginator'
-import { type ModelFieldSetRaw, type ModelData, ModelFieldSet, FieldBase } from './fields'
 
 // Type definitions
-type FilterOptions<T extends ModelFieldSetRaw> = {
+type FilterOptions<T extends FieldSetRaw> = {
   [key in keyof T]: T[key] extends FieldBase<any> ? ReturnType<T[key]['toNative']> : never
 }
-type FilterOptionsValueType<T extends ModelFieldSetRaw, K extends keyof T> = T[K] extends FieldBase<any>
-  ? ReturnType<T[K]['toNative']>
-  : never
+type FilterOptionsValueType<T extends FieldSetRaw, K extends keyof T> =
+  T[K] extends FieldBase<any> ? ReturnType<T[K]['toNative']> : never
 
 type ListApiResponse<T> = T[]
 type PaginatedListApiResponse<T> = {
@@ -19,7 +18,7 @@ type PaginatedListApiResponse<T> = {
   total: number
 }
 
-type ModelListSelector<T extends boolean, FS extends ModelFieldSetRaw, FOFS extends ModelFieldSetRaw> = T extends true
+type ModelListSelector<T extends boolean, FS extends FieldSetRaw, FOFS extends FieldSetRaw> = T extends true
   ? PaginatedModelList<FS, FOFS>
   : ModelList<FS, FOFS>
 
@@ -33,25 +32,24 @@ type ExtraMethods<LT extends ModelList<any, any>, EMD extends ExtraMethodDefinit
 
 // Classes
 export class ModelListDefinition<
-  T extends string,
-  P extends boolean,
-  FS extends ModelFieldSetRaw,
-  FOFS extends ModelFieldSetRaw,
-  EMD extends ExtraMethodDefinitions<ModelListSelector<P, FS, FOFS>>,
+  FS extends FieldSetRaw,
+  P extends boolean = false,
+  FOFS extends FieldSetRaw = {},
+  EMD extends ExtraMethodDefinitions<ModelListSelector<P, FS, FOFS>> = {},
 > {
   readonly url: string
   readonly isPaginated: boolean
-  readonly fieldSet: ModelFieldSet<FS>
-  readonly filterOptionsFieldSet: ModelFieldSet<FOFS>
+  readonly fieldSet: FieldSet<FS>
+  readonly filterOptionsFieldSet: FieldSet<FOFS>
   readonly extraMethods: EMD
 
-  constructor(url: T, isPaginated: P, rawFieldSet: FS, filterOptionsFieldSet?: FOFS, extraMethods?: EMD) {
+  constructor(url: string, rawFieldSet: FS, isPaginated?: P, filterOptionsFieldSet?: FOFS, extraMethods?: EMD) {
     this.url = url
-    this.isPaginated = isPaginated
-    this.fieldSet = new ModelFieldSet(rawFieldSet)
+    this.isPaginated = !!isPaginated
+    this.fieldSet = new FieldSet<FS>(rawFieldSet)
 
     if (!filterOptionsFieldSet) filterOptionsFieldSet = {} as FOFS
-    this.filterOptionsFieldSet = new ModelFieldSet(filterOptionsFieldSet)
+    this.filterOptionsFieldSet = new FieldSet<FOFS>(filterOptionsFieldSet)
 
     if (!extraMethods) extraMethods = {} as EMD
     this.extraMethods = extraMethods
@@ -82,14 +80,14 @@ export class ModelListDefinition<
   }
 }
 
-class ModelList<FS extends ModelFieldSetRaw, FOFS extends ModelFieldSetRaw> {
-  readonly definition: ModelListDefinition<string, boolean, FS, FOFS, ExtraMethodDefinitions<any>>
-  readonly entities: Ref<ModelData<FS>[]>
+class ModelList<FS extends FieldSetRaw, FOFS extends FieldSetRaw> {
+  readonly definition: ModelListDefinition<FS, boolean, FOFS, ExtraMethodDefinitions<any>>
+  readonly entities: Ref<FieldSetData<FS>[]>
   readonly searchText: Ref<string>
   readonly filterOptions: Ref<FilterOptions<FOFS>>
 
   constructor(
-    listDefinition: ModelListDefinition<string, boolean, FS, FOFS, ExtraMethodDefinitions<any>>,
+    listDefinition: ModelListDefinition<FS, boolean, FOFS, ExtraMethodDefinitions<any>>,
     filterOptions: FilterOptions<FOFS>,
     searchText: string,
   ) {
@@ -135,18 +133,19 @@ class ModelList<FS extends ModelFieldSetRaw, FOFS extends ModelFieldSetRaw> {
     const url =
       getURLSearchParamsSize(queryParams) > 0 ? `${this.definition.url}?${queryParams.toString()}` : this.definition.url
 
-    return $api.get<ListApiResponse<ModelData<FS>>>(url).then((response) => {
+    const api = getAxiosInstance()
+    return api.get<ListApiResponse<FieldSetData<FS>>>(url).then((response) => {
       this.entities.value = response.data.map((d) => this.definition.fieldSet.toNative(d))
       return this
     })
   }
 }
 
-class PaginatedModelList<FS extends ModelFieldSetRaw, FOFS extends ModelFieldSetRaw> extends ModelList<FS, FOFS> {
+class PaginatedModelList<FS extends FieldSetRaw, FOFS extends FieldSetRaw> extends ModelList<FS, FOFS> {
   readonly paginator: Paginator
 
   constructor(
-    listDefinition: ModelListDefinition<string, boolean, FS, FOFS, ExtraMethodDefinitions<any>>,
+    listDefinition: ModelListDefinition<FS, boolean, FOFS, ExtraMethodDefinitions<any>>,
     filterOptions: FilterOptions<FOFS>,
     searchText: string,
   ) {
@@ -175,7 +174,8 @@ class PaginatedModelList<FS extends ModelFieldSetRaw, FOFS extends ModelFieldSet
     const url =
       getURLSearchParamsSize(queryParams) > 0 ? `${this.definition.url}?${queryParams.toString()}` : this.definition.url
 
-    return $api.get<PaginatedListApiResponse<ModelData<FS>>>(url).then((response) => {
+    const api = getAxiosInstance()
+    return api.get<PaginatedListApiResponse<FieldSetData<FS>>>(url).then((response) => {
       this.entities.value = response.data.data.map((d) => this.definition.fieldSet.toNative(d))
       this.paginator.setTotal(response.data.total)
       return this
@@ -184,7 +184,14 @@ class PaginatedModelList<FS extends ModelFieldSetRaw, FOFS extends ModelFieldSet
 }
 
 export type ModelListType = InstanceType<typeof ModelList> | InstanceType<typeof PaginatedModelList>
-export type ModelDataFrom<T> = T extends ModelListDefinition<any, any, infer R, any, any> ? ModelData<R> : never
-export type FilterOptionsFrom<T> = T extends ModelListDefinition<any, any, any, infer R, any>
-  ? Ref<ModelData<R>>
-  : never
+export type ModelDataFrom<T> = T extends ModelListDefinition<infer R, any, any, any> ? FieldSetData<R> : never
+export type FilterOptionsFrom<T> = T extends ModelListDefinition<any, any, infer R, any> ? Ref<FieldSetData<R>> : never
+
+export function modelListDefinition<
+  FS extends FieldSetRaw,
+  P extends boolean = false,
+  FOFS extends FieldSetRaw = {},
+  EMD extends ExtraMethodDefinitions<ModelListSelector<P, FS, FOFS>> = {},
+>(url: string, rawFieldSet: FS, isPaginated?: P, filterOptionsFieldSet?: FOFS, extraMethods?: EMD) {
+  return new ModelListDefinition(url, rawFieldSet, isPaginated, filterOptionsFieldSet, extraMethods)
+}

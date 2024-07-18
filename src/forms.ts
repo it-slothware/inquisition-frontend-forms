@@ -2,7 +2,7 @@ import { computed, ComputedRef, ref, Ref } from 'vue'
 
 import type { Add, CreateArrayOfLength } from './types'
 import {
-  type FormData,
+  type FieldSetData,
   type ErrorList,
   FieldBase,
   FieldSetRaw,
@@ -119,8 +119,8 @@ export class FormDefinition<FS extends FieldSetRaw, EMD extends FormExtraMethods
     this.extraMethods = extraMethods
   }
 
-  new(initialData?: Partial<FormData<FS>>): FormWithExtraMethods<Form<FS>, EMD> {
-    const data: FormData<FS> = this.fieldSet.getDefault()
+  new(initialData?: Partial<FieldSetData<FS>>): FormWithExtraMethods<Form<FS>, EMD> {
+    const data: FieldSetData<FS> = this.fieldSet.getDefault()
     if (initialData) {
       Object.assign(data, initialData)
     }
@@ -132,15 +132,15 @@ export class Form<FS extends FieldSetRaw> {
   protected readonly definition: FormDefinition<FS, FormExtraMethodsDefinition<any>>
   protected readonly validationErrors: Ref<FlattenedErrors>
 
-  readonly data: Ref<FormData<FS>>
+  readonly data: Ref<FieldSetData<FS>>
   readonly errors: ComputedRef<FieldSetErrors<FS>>
   readonly hasErrors: ComputedRef<boolean>
 
-  constructor(formDefinition: FormDefinition<FS, FormExtraMethodsDefinition<any>>, data: FormData<FS>) {
+  constructor(formDefinition: FormDefinition<FS, FormExtraMethodsDefinition<any>>, data: FieldSetData<FS>) {
     this.definition = formDefinition
     this.validationErrors = ref({})
 
-    this.data = ref<FormData<FS>>(this.definition.fieldSet.getDefault()) as Ref<FormData<FS>>
+    this.data = ref<FieldSetData<FS>>(this.definition.fieldSet.getDefault()) as Ref<FieldSetData<FS>>
     this.errors = computed(() => this.unflattenErrors())
     this.hasErrors = computed(() => this.hasAnyError())
   }

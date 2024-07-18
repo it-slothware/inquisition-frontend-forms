@@ -1,4 +1,4 @@
-type FormFieldValidatorResult = string | string[] | null | undefined
+type FormFieldValidatorResult = string | string[] | null | void
 export type FormFieldValidator = (value: any) => FormFieldValidatorResult
 
 export function notNull(value: any): FormFieldValidatorResult {

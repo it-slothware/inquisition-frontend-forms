@@ -1,19 +1,19 @@
 import { type Ref, ref } from 'vue'
-import { $api } from '@/plugins/axiosPlugin'
-import { type ModelFieldSetRaw, type ModelData, ModelFieldSet } from './fields'
 import type { APIUrl } from './types'
-import { getURLSearchParamsSize } from '@/logics/apiInterfaces/utils'
+import { getURLSearchParamsSize } from './utils'
+import { getAxiosInstance } from '../axios'
+import { type FieldSetRaw, type FieldSetData, FieldSet, FieldBase } from '../fields'
 
-export class ReadOnlyEndpointModelDefinition<T extends APIUrl, FS extends ModelFieldSetRaw> {
+export class ReadOnlyEndpointModelDefinition<T extends APIUrl, FS extends FieldSetRaw> {
   readonly url: T
-  readonly fieldSet: ModelFieldSet<FS>
+  readonly fieldSet: FieldSet<FS>
 
   constructor(url: T, rawFieldSet: FS) {
     this.url = url
-    this.fieldSet = new ModelFieldSet(rawFieldSet)
+    this.fieldSet = new FieldSet(rawFieldSet)
   }
 
-  new(initialData: ModelData<FS>): ReadOnlyEndpointModel<FS, ReadOnlyEndpointModelDefinition<T, FS>> {
+  new(initialData: FieldSetData<FS>): ReadOnlyEndpointModel<FS, ReadOnlyEndpointModelDefinition<T, FS>> {
     return new ReadOnlyEndpointModel<FS, ReadOnlyEndpointModelDefinition<T, FS>>(
       this,
       this.fieldSet.toNative(initialData),
@@ -21,16 +21,13 @@ export class ReadOnlyEndpointModelDefinition<T extends APIUrl, FS extends ModelF
   }
 }
 
-export class ReadOnlyEndpointModel<
-  FS extends ModelFieldSetRaw,
-  MD extends ReadOnlyEndpointModelDefinition<APIUrl, FS>,
-> {
+export class ReadOnlyEndpointModel<FS extends FieldSetRaw, MD extends ReadOnlyEndpointModelDefinition<APIUrl, FS>> {
   readonly definition: MD
-  readonly ref: Ref<ModelData<FS>>
+  readonly ref: Ref<FieldSetData<FS>>
 
-  constructor(modelDefinition: MD, data: ModelData<FS>) {
+  constructor(modelDefinition: MD, data: FieldSetData<FS>) {
     this.definition = modelDefinition
-    this.ref = ref<ModelData<FS>>(data) as Ref<ModelData<FS>>
+    this.ref = ref<FieldSetData<FS>>(data) as Ref<FieldSetData<FS>>
   }
 
   get(filterOptions?: Record<string, any>) {
@@ -50,9 +47,14 @@ export class ReadOnlyEndpointModel<
       url += `?${params.toString()}`
     }
 
-    return $api.get(url).then((response) => {
+    const api = getAxiosInstance()
+    return api.get(url).then((response) => {
       this.ref.value = this.definition.fieldSet.toNative(response.data)
       return this
     })
   }
+}
+
+export function readOnlyEndpointModelDefinition<T extends APIUrl, FS extends FieldSetRaw>(url: T, rawFieldSet: FS) {
+  return new ReadOnlyEndpointModelDefinition(url, rawFieldSet)
 }

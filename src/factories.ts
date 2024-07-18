@@ -11,6 +11,8 @@ import {
   FieldSet,
   FieldSetRaw,
   FieldBase,
+  FieldSetData,
+  FieldSetDefault,
 } from './fields'
 import { isFieldLabel, isBoolean, isValidationFunctionArray } from './utils'
 import { type FormFieldValidator } from './validators'
@@ -598,7 +600,7 @@ export function arrayField<P extends boolean = false>(
   argFifth?,
 ): ArrayField<any, P> {
   let label: string = ''
-  let baseField: FieldSetRaw | FieldBase<any, any> = {}
+  let baseField: FieldSetRaw | FieldBase<any, any>
   let defaultValue: any = undefined // TODO type this line
   let initialLength: number = 0
   let nullable: P = false as P
@@ -684,6 +686,121 @@ export function arrayField<P extends boolean = false>(
   return new ArrayField(label, baseField, defaultValue, initialLength, nullable, validators)
 }
 
-export function fieldSet<P extends boolean = false>(rawFields: any, defaultValue: any, nullable: P): FieldSet<any, P> {
-  return new FieldSet(rawFields, '', defaultValue, nullable)
+// ------------------------
+//         FieldSet
+// ------------------------
+function isDefaultFieldSetValue<T extends FieldSetRaw, P extends boolean>(value: any): value is FieldSetDefault<T, P> {
+  return value === null || typeof value === 'function'
+}
+
+export function fieldSet<T extends FieldSetRaw>(rawFieldSet: T): FieldSet<T>
+export function fieldSet<T extends FieldSetRaw>(label: string, rawFieldSet: T): FieldSet<T>
+export function fieldSet<T extends FieldSetRaw, D extends FieldSetDefault<T>>(
+  rawFieldSet: T,
+  defaultValue: D,
+): FieldSet<T>
+export function fieldSet<T extends FieldSetRaw, P extends boolean>(rawFieldSet: T, nullable: P): FieldSet<T, P>
+export function fieldSet<T extends FieldSetRaw>(rawFieldSet: T, validators: FormFieldValidator[]): FieldSet<T>
+export function fieldSet<T extends FieldSetRaw, D extends FieldSetDefault<T, P>, P extends boolean>(
+  rawFieldSet: T,
+  defaultValue: D,
+  nullable: P,
+): FieldSet<T, P>
+export function fieldSet<T extends FieldSetRaw, D extends FieldSetDefault<T>>(
+  rawFieldSet: T,
+  defaultValue: D,
+  validators: FormFieldValidator[],
+): FieldSet<T>
+export function fieldSet<T extends FieldSetRaw, D extends FieldSetDefault<T>>(
+  label: string,
+  rawFieldSet: T,
+  defaultValue: D,
+): FieldSet<T>
+export function fieldSet<T extends FieldSetRaw, P extends boolean>(
+  label: string,
+  rawFieldSet: T,
+  nullable: P,
+): FieldSet<T, P>
+export function fieldSet<T extends FieldSetRaw, D extends FieldSetDefault<T, P>, P extends boolean>(
+  rawFieldSet: T,
+  defaultValue: D,
+  nullable: P,
+  validators: FormFieldValidator[],
+): FieldSet<T, P>
+export function fieldSet<T extends FieldSetRaw, D extends FieldSetDefault<T, P>, P extends boolean>(
+  label: string,
+  rawFieldSet: T,
+  defaultValue: D,
+  nullable: P,
+): FieldSet<T, P>
+export function fieldSet<T extends FieldSetRaw, D extends FieldSetDefault<T, P>, P extends boolean>(
+  label: string,
+  rawFieldSet: T,
+  defaultValue: D,
+  nullable: P,
+  validators: FormFieldValidator[],
+): FieldSet<T, P>
+export function fieldSet<T extends FieldSetRaw, P extends boolean = false>(
+  argFirst,
+  argSecond?,
+  argThird?,
+  argFourth?,
+  argFifth?,
+): FieldSet<any, P> {
+  let label: string = ''
+  let rawFieldSet: FieldSetRaw
+  let defaultValue: FieldSetDefault<T, P> | undefined = undefined
+  let nullable: P = false as P
+  let validators: FormFieldValidator[] = []
+
+  if (isFieldLabel(argFirst)) {
+    label = argFirst
+    rawFieldSet = argSecond
+
+    if (isDefaultFieldSetValue<T, P>(argThird)) {
+      defaultValue = argThird
+
+      if (isBoolean(argFourth)) {
+        nullable = argFourth as P
+
+        if (isValidationFunctionArray(argFifth)) {
+          validators = argFifth
+        }
+      }
+    } else if (isBoolean(argThird)) {
+      nullable = argThird as P
+
+      if (isValidationFunctionArray(argFourth)) {
+        validators = argFourth
+      }
+    } else if (isValidationFunctionArray(argThird)) {
+      validators = argThird
+    }
+  } else {
+    rawFieldSet = argFirst
+
+    if (isDefaultFieldSetValue<T, P>(argSecond)) {
+      defaultValue = argSecond
+
+      if (isBoolean(argThird)) {
+        nullable = argThird as P
+
+        if (isValidationFunctionArray(argFourth)) {
+          validators = argFourth
+        }
+      } else if (isValidationFunctionArray(argThird)) {
+        validators = argThird
+      }
+    } else if (isBoolean(argSecond)) {
+      nullable = argSecond as P
+
+      if (isValidationFunctionArray(argThird)) {
+        validators = argThird
+      }
+    } else if (isValidationFunctionArray(argSecond)) {
+      validators = argSecond
+    }
+  }
+
+  return new FieldSet(rawFieldSet, label, defaultValue, nullable, validators)
 }

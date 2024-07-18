@@ -2,6 +2,7 @@
   "name": "inquisition-forms",
   "version": "1.0.0",
   "description": "Inquisition Form Data handler",
+  "author": "Simon Sagi <simon.sagi@itslothware.com>",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
@@ -12,7 +13,6 @@
     "type": "git",
     "url": "git+https://github.com/it-slothware/inquisition-frontend-forms.git"
   },
-  "author": "",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/it-slothware/inquisition-frontend-forms/issues"
@@ -26,5 +26,8 @@
     "tsup": "^8.0.2",
     "typescript": "^5.5.3",
     "vue": "^3.4.25"
+  },
+  "dependencies": {
+    "axios": "^1.7.2"
   }
 }

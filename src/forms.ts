@@ -29,15 +29,15 @@ type CountOfSubString<
 > = T extends `${string}${S}${infer R}` ? CountOfSubString<R, S, [1, ...C]> : C['length']
 
 export type FormExtraMethod<T> = (this: T, ...args: any[]) => any
-export type FormExtraMethodsDefinition<F extends Form<any>> = {
+export type FormExtraMethodsDefinition<F extends Form<any, any>> = {
   [key: string]: FormExtraMethod<F>
 }
 
-export type FormExtraMethods<F extends Form<any>, EMD extends FormExtraMethodsDefinition<F>> = {
+export type FormExtraMethods<F extends Form<any, any>, EMD extends FormExtraMethodsDefinition<F>> = {
   [key in keyof EMD]: (...args: Parameters<EMD[key]>) => ReturnType<EMD[key]>
 }
 
-export type FormWithExtraMethods<F extends Form<any>, EMD extends FormExtraMethodsDefinition<F>> = F &
+export type FormWithExtraMethods<F extends Form<any, any>, EMD extends FormExtraMethodsDefinition<F>> = F &
   FormExtraMethods<F, EMD>
 
 export type FlattenedErrors = Record<string, ErrorList>
@@ -109,7 +109,10 @@ type PushRelatedArguments<T extends string, FS extends FieldSetRaw> = [
 ]
 export type RelatedLookupIndexes<T extends string> = IndexArray<Add<CountOfSubString<T, '.0'>>>
 
-export class FormDefinition<FS extends FieldSetRaw, EMD extends FormExtraMethodsDefinition<Form<FS>>> {
+export class FormDefinition<
+  FS extends FieldSetRaw,
+  EMD extends FormExtraMethodsDefinition<Form<FS, FormDefinition<FS, EMD>>> = {},
+> {
   readonly fieldSet: FieldSet<FS>
   readonly extraMethods: EMD
 
@@ -119,24 +122,27 @@ export class FormDefinition<FS extends FieldSetRaw, EMD extends FormExtraMethods
     this.extraMethods = extraMethods
   }
 
-  new(initialData?: Partial<FieldSetData<FS>>): FormWithExtraMethods<Form<FS>, EMD> {
+  new(initialData?: Partial<FieldSetData<FS>>): FormWithExtraMethods<Form<FS, FormDefinition<FS, EMD>>, EMD> {
     const data: FieldSetData<FS> = this.fieldSet.getDefault()
     if (initialData) {
       Object.assign(data, initialData)
     }
-    return new Form<FS>(this, data) as FormWithExtraMethods<Form<FS>, EMD>
+    return new Form<FS, FormDefinition<FS, EMD>>(this, data) as FormWithExtraMethods<
+      Form<FS, FormDefinition<FS, EMD>>,
+      EMD
+    >
   }
 }
 
-export class Form<FS extends FieldSetRaw> {
-  protected readonly definition: FormDefinition<FS, FormExtraMethodsDefinition<any>>
+export class Form<FS extends FieldSetRaw, FD extends FormDefinition<any, any>> {
+  protected readonly definition: FD
   protected readonly validationErrors: Ref<FlattenedErrors>
 
   readonly data: Ref<FieldSetData<FS>>
   readonly errors: ComputedRef<FieldSetErrors<FS>>
   readonly hasErrors: ComputedRef<boolean>
 
-  constructor(formDefinition: FormDefinition<FS, FormExtraMethodsDefinition<any>>, data: FieldSetData<FS>) {
+  constructor(formDefinition: FD, data: FieldSetData<FS>) {
     this.definition = formDefinition
     this.validationErrors = ref({})
 

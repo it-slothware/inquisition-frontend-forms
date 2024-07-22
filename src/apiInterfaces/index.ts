@@ -1,24 +1,24 @@
-import { ReadOnlyEndpointModelDefinition, readOnlyEndpointModelDefinition } from './readOnlyEndpoint'
-import { SingleEndpointModelDefinition, singleEndpointModelDefinition } from './singleEndpoint'
+import { ReadOnlyEndpointFormDefinition, readOnlyEndpointFormDefinition } from './readOnlyEndpoint'
+import { SingleEndpointFormDefinition, singleEndpointFormDefinition } from './singleEndpoint'
 import { ModelListDefinition, modelListDefinition } from './list'
-import { CrudModelDefinition, crudModelDefinition } from './crud'
+import { CrudAPIFormDefinition, crudModelDefinition } from './crud'
 import { Paginator } from './paginator'
 
 export {
   // Read only
-  ReadOnlyEndpointModelDefinition,
-  readOnlyEndpointModelDefinition,
+  ReadOnlyEndpointFormDefinition,
+  readOnlyEndpointFormDefinition,
 
   // Single endpoint
-  SingleEndpointModelDefinition,
-  singleEndpointModelDefinition,
+  SingleEndpointFormDefinition,
+  singleEndpointFormDefinition,
 
   // Lists
   ModelListDefinition,
   modelListDefinition,
 
   // CRUD
-  CrudModelDefinition,
+  CrudAPIFormDefinition,
   crudModelDefinition,
 
   // Pagination

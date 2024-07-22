@@ -2,31 +2,35 @@ import { type Ref, ref } from 'vue'
 import type { APIUrl } from './types'
 import { getURLSearchParamsSize } from './utils'
 import { getAxiosInstance } from '../axios'
-import { type FieldSetRaw, type FieldSetData, FieldSet, FieldBase } from '../fields'
+import { FormDefinition, Form } from '../forms'
+import { type FieldSetRaw, type FieldSetData } from '../fields'
 
-export class ReadOnlyEndpointModelDefinition<T extends APIUrl, FS extends FieldSetRaw> {
+export class ReadOnlyEndpointFormDefinition<T extends APIUrl, FS extends FieldSetRaw> extends FormDefinition<FS> {
   readonly url: T
-  readonly fieldSet: FieldSet<FS>
 
   constructor(url: T, rawFieldSet: FS) {
+    super(rawFieldSet)
     this.url = url
-    this.fieldSet = new FieldSet(rawFieldSet)
   }
 
-  new(initialData: FieldSetData<FS>): ReadOnlyEndpointModel<FS, ReadOnlyEndpointModelDefinition<T, FS>> {
-    return new ReadOnlyEndpointModel<FS, ReadOnlyEndpointModelDefinition<T, FS>>(
+  new(initialData?: Partial<FieldSetData<FS>>): ReadOnlyEndpointForm<FS, any> {
+    return new ReadOnlyEndpointForm<FS, ReadOnlyEndpointFormDefinition<T, FS>>(
       this,
       this.fieldSet.toNative(initialData),
     )
   }
 }
 
-export class ReadOnlyEndpointModel<FS extends FieldSetRaw, MD extends ReadOnlyEndpointModelDefinition<APIUrl, FS>> {
-  readonly definition: MD
+export class ReadOnlyEndpointForm<
+  FS extends FieldSetRaw,
+  FD extends ReadOnlyEndpointFormDefinition<APIUrl, FS>,
+> extends Form<FS, FD> {
+  readonly definition: FD
   readonly ref: Ref<FieldSetData<FS>>
 
-  constructor(modelDefinition: MD, data: FieldSetData<FS>) {
-    this.definition = modelDefinition
+  constructor(formDefinition: FD, data: FieldSetData<FS>) {
+    super(formDefinition, data)
+    this.definition = formDefinition
     this.ref = ref<FieldSetData<FS>>(data) as Ref<FieldSetData<FS>>
   }
 
@@ -55,6 +59,6 @@ export class ReadOnlyEndpointModel<FS extends FieldSetRaw, MD extends ReadOnlyEn
   }
 }
 
-export function readOnlyEndpointModelDefinition<T extends APIUrl, FS extends FieldSetRaw>(url: T, rawFieldSet: FS) {
-  return new ReadOnlyEndpointModelDefinition(url, rawFieldSet)
+export function readOnlyEndpointFormDefinition<T extends APIUrl, FS extends FieldSetRaw>(url: T, rawFieldSet: FS) {
+  return new ReadOnlyEndpointFormDefinition(url, rawFieldSet)
 }

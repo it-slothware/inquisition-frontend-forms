@@ -1,15 +1,16 @@
 import { type Ref, ref } from 'vue'
-import { getAxiosInstance } from '../axios'
-import { type FieldSetRaw, type FieldSetData, type FieldSetErrors, FieldSet } from '../fields'
 import { ValidatedModelInterface } from './types'
+import { getAxiosInstance } from '../axios'
+import { FormDefinition, Form } from '../forms'
+import { type FieldSetRaw, type FieldSetData, type FieldSetErrors, FieldSet } from '../fields'
 
-export class SingleEndpointModelDefinition<T extends string, FS extends FieldSetRaw> {
+export class SingleEndpointFormDefinition<T extends string, FS extends FieldSetRaw> extends FormDefinition<FS, {}> {
   readonly url: string
   readonly fieldSet: FieldSet<FS>
 
   constructor(url: T, rawFieldSet: FS) {
+    super(rawFieldSet)
     this.url = url
-    this.fieldSet = new FieldSet(rawFieldSet)
   }
 
   new(initialData?: Object): SingleEndpointModel<FS> {
@@ -17,12 +18,15 @@ export class SingleEndpointModelDefinition<T extends string, FS extends FieldSet
   }
 }
 
-export class SingleEndpointModel<FS extends FieldSetRaw> implements ValidatedModelInterface {
-  readonly definition: SingleEndpointModelDefinition<string, FS>
+export class SingleEndpointForm<FS extends FieldSetRaw, FD extends SingleEndpointFormDefinition<any, FS>> extends Form<
+  FS,
+  FD
+> {
+  readonly definition: SingleEndpointFormDefinition<string, FS>
   readonly ref: Ref<FieldSetData<FS>>
   readonly errors: Ref<FieldSetErrors<FS>>
 
-  constructor(modelDefinition: SingleEndpointModelDefinition<string, FS>, data: FieldSetData<FS>) {
+  constructor(modelDefinition: SingleEndpointFormDefinition<string, FS>, data: FieldSetData<FS>) {
     this.definition = modelDefinition
     this.ref = ref(data) as Ref<FieldSetData<FS>>
     this.errors = ref({}) as Ref<FieldSetErrors<FS>>
@@ -57,6 +61,6 @@ export class SingleEndpointModel<FS extends FieldSetRaw> implements ValidatedMod
   }
 }
 
-export function singleEndpointModelDefinition<T extends string, FS extends FieldSetRaw>(url: T, rawFieldSet: FS) {
-  return new SingleEndpointModelDefinition(url, rawFieldSet)
+export function singleEndpointFormDefinition<T extends string, FS extends FieldSetRaw>(url: T, rawFieldSet: FS) {
+  return new SingleEndpointFormDefinition(url, rawFieldSet)
 }

@@ -1,4 +1,4 @@
-import { ComputedRef, type Ref, ref } from 'vue'
+import { computed, ComputedRef, type Ref, ref } from 'vue'
 import type { APIUrl, CallbackFunction } from './types'
 import { type FieldSetRaw, type FieldSetData, type IdTypeFromFieldSet, type FieldSetErrors } from '../fields'
 import { getAxiosInstance, showSuccessNotification, showErrorNotification } from '../configurable'
@@ -49,6 +49,7 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
   readonly definition: CrudAPIFormDefinition<FS, any>
   ref: Ref<FieldSetData<FS>>
   readonly errors: ComputedRef<FieldSetErrors<FS>>
+  readonly isSaved: ComputedRef<boolean>
 
   private readonly postRetrieveCallbacks: CallbackFunction[]
   private readonly postCreateCallbacks: CallbackFunction[]
@@ -72,6 +73,10 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
     this.postCreateCallbacks = []
     this.postUpdateCallbacks = []
     this.postDeleteCallbacks = []
+
+    this.isSaved = computed(() => {
+      return 'id' in this.data.value && this.data.value !== null
+    })
   }
 
   postRetrieve(func: CallbackFunction) {

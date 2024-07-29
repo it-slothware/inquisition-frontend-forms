@@ -2,33 +2,27 @@ import { type Ref, ref } from 'vue'
 import type { APIUrl } from './types'
 import { getURLSearchParamsSize } from './utils'
 import { getAxiosInstance } from '../axios'
-import { FormDefinition, Form } from '../forms'
 import { type FieldSetRaw, type FieldSetData } from '../fields'
+import { BaseApiForm, BaseApiFormDefinition } from './base'
 
-export class ReadOnlyEndpointFormDefinition<T extends APIUrl, FS extends FieldSetRaw> extends FormDefinition<FS> {
-  readonly url: T
+export class ReadOnlyEndpointFormDefinition<FS extends FieldSetRaw> extends BaseApiFormDefinition<FS> {
+  readonly url: APIUrl
 
-  constructor(url: T, rawFieldSet: FS) {
-    super(rawFieldSet)
+  constructor(url: APIUrl, rawFieldSet: FS) {
+    super(url, rawFieldSet)
     this.url = url
   }
 
-  new(initialData?: Partial<FieldSetData<FS>>): ReadOnlyEndpointForm<FS, any> {
-    return new ReadOnlyEndpointForm<FS, ReadOnlyEndpointFormDefinition<T, FS>>(
-      this,
-      this.fieldSet.toNative(initialData),
-    )
+  new(initialData?: Partial<FieldSetData<FS>>): ReadOnlyEndpointForm<FS> {
+    return new ReadOnlyEndpointForm<FS>(this, this.fieldSet.toNative(initialData))
   }
 }
 
-export class ReadOnlyEndpointForm<
-  FS extends FieldSetRaw,
-  FD extends ReadOnlyEndpointFormDefinition<APIUrl, FS>,
-> extends Form<FS, FD> {
-  readonly definition: FD
+export class ReadOnlyEndpointForm<FS extends FieldSetRaw> extends BaseApiForm<FS> {
+  readonly definition: ReadOnlyEndpointFormDefinition<FS>
   readonly ref: Ref<FieldSetData<FS>>
 
-  constructor(formDefinition: FD, data: FieldSetData<FS>) {
+  constructor(formDefinition: ReadOnlyEndpointFormDefinition<FS>, data: FieldSetData<FS>) {
     super(formDefinition, data)
     this.definition = formDefinition
     this.ref = ref<FieldSetData<FS>>(data) as Ref<FieldSetData<FS>>
@@ -43,10 +37,7 @@ export class ReadOnlyEndpointForm<
       }
     }
 
-    let url: string
-    if (typeof this.definition.url === 'string') url = this.definition.url
-    else url = this.definition.url()
-
+    let url = this.getApiURL()
     if (getURLSearchParamsSize(params) > 0) {
       url += `?${params.toString()}`
     }

@@ -1,64 +1,61 @@
 import { ComputedRef, type Ref, ref } from 'vue'
-import type { ValidatedModelInterface, APIUrl } from './types'
-import { type FormExtraMethodsDefinition, FormDefinition, Form, FormWithExtraMethods } from '../forms'
-import { type FieldSetRaw, type FieldSetData, type IdTypeFromFieldSet, type FieldSetErrors, FieldSet } from '../fields'
+import type { APIUrl } from './types'
+import { type FormExtraMethodsDefinition } from '../forms'
+import { type FieldSetRaw, type FieldSetData, type IdTypeFromFieldSet, type FieldSetErrors } from '../fields'
 import { getAxiosInstance } from '../axios'
+import { BaseApiForm, BaseApiFormDefinition } from './base'
+import { createULR } from './utils'
 
 export class CrudAPIFormDefinition<
-  T extends APIUrl,
   FS extends FieldSetRaw,
   EMD extends FormExtraMethodsDefinition<any> = {},
-> extends FormDefinition<FS, EMD> {
+> extends BaseApiFormDefinition<FS> {
   readonly url: APIUrl
 
-  constructor(url: T, rawFieldSet: FS, extraMethods?: EMD) {
-    super(rawFieldSet, extraMethods)
+  constructor(url: APIUrl, rawFieldSet: FS, extraMethods?: EMD) {
+    super(url, rawFieldSet)
     this.url = url
   }
 
-  fetch(modelId: IdTypeFromFieldSet<FS>): CrudForm<FS> {
-    const model = new CrudForm<FS>(this, this.fieldSet.toNative({ id: modelId }))
+  new(initialData?: Partial<FieldSetData<FS>>): CrudApiForm<FS> {
+    return new CrudApiForm<FS>(this, this.fieldSet.toNative(initialData))
+  }
+
+  fetch(modelId: IdTypeFromFieldSet<FS>): CrudApiForm<FS> {
+    const model = new CrudApiForm<FS>(this, this.fieldSet.toNative({ id: modelId }))
     model.retrieve()
     return model
   }
 
-  fetchOrNew(modelId?: IdTypeFromFieldSet<FS>): CrudForm<FS> {
+  fetchOrNew(modelId?: IdTypeFromFieldSet<FS>): CrudApiForm<FS> {
     if (!!modelId) return this.fetch(modelId)
     return this.new()
   }
 }
 
-export class CrudForm<FS extends FieldSetRaw> extends Form<FS> {
-  readonly definition: CrudAPIFormDefinition<APIUrl, FS, any>
+export class CrudApiForm<FS extends FieldSetRaw> extends BaseApiForm<FS> {
+  readonly definition: CrudAPIFormDefinition<FS, any>
   ref: Ref<FieldSetData<FS>>
   readonly errors: ComputedRef<FieldSetErrors<FS>>
 
-  constructor(modelDefinition: CrudAPIFormDefinition<APIUrl, FS, any>, data: FieldSetData<FS>) {
-    this.definition = modelDefinition
+  constructor(formDefinition: CrudAPIFormDefinition<FS, any>, data: FieldSetData<FS>) {
+    super(formDefinition, data)
+    this.definition = formDefinition
     this.ref = ref(data) as Ref<FieldSetData<FS>>
-    this.errors = ref(data) as Ref<FieldSetErrors<FS>>
   }
 
-  resetValidation() {
-    this.errors.value = {} as FieldSetErrors<FS>
-  }
-
-  retrieve() {
+  retrieve(): Promise<CrudApiForm<FS>> {
     if (!('id' in this.ref.value)) {
       console.warn('Cannot retrieve a model without an ID field')
-      return new Promise<CrudForm<FS>>((resolve) => {
+      return new Promise<CrudApiForm<FS>>((resolve) => {
         resolve(this)
       })
     }
     const modelId: IdTypeFromFieldSet<FS> = this.ref.value.id as IdTypeFromFieldSet<FS>
 
-    let url: string
-    if (typeof this.definition.url === 'string') url = `${this.definition.url}${modelId}/`
-    else url = this.definition.url({ id: modelId })
-
     const api = getAxiosInstance()
     return api
-      .get(url)
+      .get(this.getApiURL(modelId))
       .then((response) => {
         this.ref.value = this.definition.fieldSet.toNative(response.data)
         return this
@@ -69,13 +66,9 @@ export class CrudForm<FS extends FieldSetRaw> extends Form<FS> {
   }
 
   create() {
-    let url: string
-    if (typeof this.definition.url === 'string') url = this.definition.url
-    else url = this.definition.url()
-
     const api = getAxiosInstance()
     return api
-      .post(url, this.definition.fieldSet.fromNative(this.ref.value))
+      .post(this.getApiURL(), this.definition.fieldSet.fromNative(this.ref.value))
       .then((response) => {
         this.ref.value = this.definition.fieldSet.toNative(response.data)
         return this
@@ -88,19 +81,15 @@ export class CrudForm<FS extends FieldSetRaw> extends Form<FS> {
   update() {
     if (!('id' in this.ref.value)) {
       console.warn('Cannot update a model without an ID field')
-      return new Promise<CrudModel<FS>>((resolve) => {
+      return new Promise<CrudApiForm<FS>>((resolve) => {
         resolve(this)
       })
     }
     const modelId: IdTypeFromFieldSet<FS> = this.ref.value.id as IdTypeFromFieldSet<FS>
 
-    let url: string
-    if (typeof this.definition.url === 'string') url = `${this.definition.url}${modelId}/`
-    else url = this.definition.url({ id: modelId })
-
     const api = getAxiosInstance()
     return api
-      .put(url, this.definition.fieldSet.fromNative(this.ref.value))
+      .put(this.getApiURL(modelId), this.definition.fieldSet.fromNative(this.ref.value))
       .then((response) => {
         this.ref.value = this.definition.fieldSet.toNative(response.data)
         return this
@@ -113,20 +102,16 @@ export class CrudForm<FS extends FieldSetRaw> extends Form<FS> {
   delete() {
     if (!('id' in this.ref.value)) {
       console.warn('Cannot delete a model without an ID field')
-      return new Promise<CrudModel<FS>>((resolve) => {
+      return new Promise<CrudApiForm<FS>>((resolve) => {
         resolve(this)
       })
     }
 
     const modelId: IdTypeFromFieldSet<FS> = this.ref.value.id as IdTypeFromFieldSet<FS>
 
-    let url: string
-    if (typeof this.definition.url === 'string') url = `${this.definition.url}${modelId}/`
-    else url = this.definition.url({ id: modelId })
-
     const api = getAxiosInstance()
     return api
-      .delete(url)
+      .delete(this.getApiURL(modelId))
       .then(() => {
         return this
       })
@@ -134,8 +119,13 @@ export class CrudForm<FS extends FieldSetRaw> extends Form<FS> {
         return this
       })
   }
+
+  protected getApiURL(modelId?: IdTypeFromFieldSet<FS>): string {
+    if (typeof this.definition.url === 'function') return this.definition.url({ id: modelId })
+    return createULR(this.definition.url, modelId)
+  }
 }
 
-export function crudModelDefinition<T extends APIUrl, FS extends FieldSetRaw>(url: T, rawFieldSet: FS) {
-  return new CrudModelDefinition(url, rawFieldSet)
+export function crudApiFormDefinition<T extends APIUrl, FS extends FieldSetRaw>(url: T, rawFieldSet: FS) {
+  return new CrudAPIFormDefinition(url, rawFieldSet)
 }

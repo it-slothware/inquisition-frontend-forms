@@ -254,8 +254,7 @@ export class ArrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends b
 
   validateArray(value: ConditionalNullable<any[], P>): FlattenedErrors {
     const errors: FlattenedErrors = {}
-    // TODO fix typing of this
-    // errors.non_field_errors = this.validate(value)
+    errors.non_field_errors = this.validate(value)
 
     if (this.nullable && value === null) return errors
 
@@ -275,14 +274,12 @@ export class ArrayField<T extends FieldSetRaw | FieldBase<any, any>, P extends b
   }
 }
 
-export type FieldSetDefault<T extends FieldSetRaw, P extends boolean = false> = P extends true
-  ? () => ConditionalNullable<FieldSetData<T>, P>
-  : () => ConditionalNullable<FieldSetData<T>, P>
-
-export class FieldSet<FS extends FieldSetRaw, P extends boolean = false> extends FieldBase<
-  ConditionalNullable<FieldSetData<FS>, P>,
+export type FieldSetDefault<T extends FieldSetRaw, P extends boolean = false> = () => ConditionalNullable<
+  FieldSetData<T>,
   P
-> {
+>
+
+export class FieldSet<FS extends FieldSetRaw, P extends boolean = false> extends FieldBase<FieldSetData<FS>, P> {
   readonly fieldSetRoot: FormFieldSetRoot<FS>
 
   constructor(
@@ -294,14 +291,14 @@ export class FieldSet<FS extends FieldSetRaw, P extends boolean = false> extends
   ) {
     if (label === undefined) label = ''
     if (defaultValue === undefined) {
-      defaultValue = (() => {
+      defaultValue = () => {
         const defaultData: Record<string, any> = {}
         for (const fieldName of Object.keys(this.fieldSetRoot)) {
           const field = this.fieldSetRoot[fieldName]
           defaultData[fieldName] = field.getDefault()
         }
         return defaultData as ConditionalNullable<FieldSetData<FS>, P>
-      }) as FieldSetDefault<FS, P>
+      }
     }
     super(label, defaultValue, nullable, validators)
 
@@ -340,7 +337,7 @@ export class FieldSet<FS extends FieldSetRaw, P extends boolean = false> extends
   }
 }
 
-function extendErrors(original: FlattenedErrors, additional: FlattenedErrors, prefix: string): FlattenedErrors {
+export function extendErrors(original: FlattenedErrors, additional: FlattenedErrors, prefix: string): FlattenedErrors {
   Object.entries(additional).forEach(([key, value]) => {
     original[`${prefix}.${key}`] = value
   })

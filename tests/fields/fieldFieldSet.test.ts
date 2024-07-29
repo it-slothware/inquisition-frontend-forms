@@ -1,5 +1,5 @@
 import { format as prettyFormat } from 'pretty-format'
-import { fieldSet, charField, numberField } from '../src'
+import { fieldSet, charField, numberField } from '../../src'
 
 function idIsSetValidator(value: any): string | void {
   if (!value.id) return 'Invalid ID value'

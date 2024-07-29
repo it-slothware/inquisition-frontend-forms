@@ -1,4 +1,4 @@
-import { isFieldLabel, isBoolean, isValidationFunctionArray } from '../src/utils'
+import { isFieldLabel, isBoolean, isValidationFunctionArray, range } from '../src/utils'
 
 test('isFieldLabel', () => {
   expect(isFieldLabel('')).toBe(true)
@@ -39,4 +39,10 @@ test('isValidationFunctionArray', () => {
   expect(isValidationFunctionArray(undefined)).toBe(false)
   expect(isValidationFunctionArray(() => {})).toBe(false)
   expect(isValidationFunctionArray({})).toBe(false)
+})
+
+test('range', () => {
+  expect(range(3)).toStrictEqual([0, 1, 2])
+  expect(range(2, 5)).toStrictEqual([2, 3, 4])
+  expect(range(5, 3)).toStrictEqual([])
 })

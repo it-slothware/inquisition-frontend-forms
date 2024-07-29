@@ -1,5 +1,5 @@
 import { format as prettyFormat } from 'pretty-format'
-import { arrayField, numberField, notEmpty, fieldSet } from '../src'
+import { arrayField, numberField, notEmpty, fieldSet } from '../../src'
 
 describe('Array field factory', () => {
   // Single argument
@@ -220,12 +220,15 @@ describe('Base field types', () => {
     const field = arrayField({ id: numberField(42) }, 1)
     expect(field.getDefault()).toStrictEqual([{ id: 42 }])
   })
-  test('Test base fieldset whith nullable field', () => {
+  test('Test base fieldset with nullable field', () => {
     const field = arrayField({ id: numberField(null, true) }, 1)
     expect(field.getDefault()).toStrictEqual([{ id: null }])
   })
   test('Test base nullable fieldset', () => {
-    const field = arrayField(fieldSet({ id: numberField(null, true) }, null, true), 1)
+    const field = arrayField(
+      fieldSet({ id: numberField(null, true) }, () => null, true),
+      1,
+    )
     expect(field.getDefault()).toStrictEqual([null])
   })
   test('Test base field', () => {

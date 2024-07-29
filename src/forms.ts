@@ -2,8 +2,9 @@ import { computed, ComputedRef, ref, Ref } from 'vue'
 
 import type { Add, CreateArrayOfLength } from './types'
 import {
-  type FieldSetData,
   type ErrorList,
+  type FieldSetData,
+  type FlattenedErrors,
   FieldBase,
   FieldSetRaw,
   FieldSet,
@@ -13,6 +14,7 @@ import {
   isArrayField,
   isFormFieldSet,
 } from './fields'
+import { range } from './utils'
 
 type Split<S extends string, D extends string> = string extends S
   ? string[]
@@ -29,27 +31,27 @@ type CountOfSubString<
 > = T extends `${string}${S}${infer R}` ? CountOfSubString<R, S, [1, ...C]> : C['length']
 
 export type FormExtraMethod<T> = (this: T, ...args: any[]) => any
-export type FormExtraMethodsDefinition<F extends Form<any, any>> = {
+export type FormExtraMethodsDefinition<F extends Form<any>> = {
   [key: string]: FormExtraMethod<F>
 }
 
-export type FormExtraMethods<F extends Form<any, any>, EMD extends FormExtraMethodsDefinition<F>> = {
+export type FormExtraMethods<F extends Form<any>, EMD extends FormExtraMethodsDefinition<F>> = {
   [key in keyof EMD]: (...args: Parameters<EMD[key]>) => ReturnType<EMD[key]>
 }
 
-export type FormWithExtraMethods<F extends Form<any, any>, EMD extends FormExtraMethodsDefinition<F>> = F &
+export type FormWithExtraMethods<F extends Form<any>, EMD extends FormExtraMethodsDefinition<F>> = F &
   FormExtraMethods<F, EMD>
-
-export type FlattenedErrors = Record<string, ErrorList>
 
 type ArrayFieldNamesFromArrayField<T extends ArrayField<any, any>, C extends unknown[]> = C extends [...infer CR, any]
   ? T extends ArrayField<infer R, any>
     ? R extends FieldSetRaw
       ? `0.${ArrayFieldNamesFromFieldSetRaw<R, CR> & string}`
       : R extends FieldBase<any, any>
-        ? R extends ArrayField<any, any>
-          ? '0' | `0.${ArrayFieldNamesFromArrayField<R, CR> & string}`
-          : never
+        ? R extends FieldSet<infer Q, any>
+          ? `0.${ArrayFieldNamesFromFieldSetRaw<Q, CR> & string}`
+          : R extends ArrayField<any, any>
+            ? '0' | `0.${ArrayFieldNamesFromArrayField<R, CR> & string}`
+            : never
         : never
     : never
   : never
@@ -58,9 +60,11 @@ type ArrayFieldNamesFromFieldSetRaw<T extends FieldSetRaw, C extends unknown[]> 
   [K in keyof T]: C extends [...infer CR, any]
     ? T[K] extends FieldSetRaw
       ? `${K & string}.${ArrayFieldNamesFromFieldSetRaw<T[K], CR>}`
-      : T[K] extends ArrayField<any, any>
-        ? `${K & string}` | `${K & string}.${ArrayFieldNamesFromArrayField<T[K], CR>}`
-        : never
+      : T[K] extends FieldSet<infer R, any>
+        ? `${K & string}.${ArrayFieldNamesFromFieldSetRaw<R, CR>}`
+        : T[K] extends ArrayField<any, any>
+          ? `${K & string}` | `${K & string}.${ArrayFieldNamesFromArrayField<T[K], CR>}`
+          : never
     : never
 }[keyof T]
 
@@ -109,60 +113,63 @@ type PushRelatedArguments<T extends string, FS extends FieldSetRaw> = [
 ]
 export type RelatedLookupIndexes<T extends string> = IndexArray<Add<CountOfSubString<T, '.0'>>>
 
-export class FormDefinition<
-  FS extends FieldSetRaw,
-  EMD extends FormExtraMethodsDefinition<Form<FS, FormDefinition<FS, EMD>>> = {},
-> {
+export class FormDefinition<FS extends FieldSetRaw> {
   readonly fieldSet: FieldSet<FS>
-  readonly extraMethods: EMD
 
-  constructor(rawFieldSet: FS, extraMethods?: EMD) {
+  constructor(rawFieldSet: FS) {
     this.fieldSet = new FieldSet(rawFieldSet)
-    if (!extraMethods) extraMethods = {} as EMD
-    this.extraMethods = extraMethods
   }
 
-  new(initialData?: Partial<FieldSetData<FS>>): FormWithExtraMethods<Form<FS, FormDefinition<FS, EMD>>, EMD> {
+  new(initialData?: Partial<FieldSetData<FS>>): Form<FS> {
     const data: FieldSetData<FS> = this.fieldSet.getDefault()
     if (initialData) {
       Object.assign(data, initialData)
     }
-    return new Form<FS, FormDefinition<FS, EMD>>(this, data) as FormWithExtraMethods<
-      Form<FS, FormDefinition<FS, EMD>>,
-      EMD
-    >
+    return new Form<FS>(this, data)
   }
 }
 
-export class Form<FS extends FieldSetRaw, FD extends FormDefinition<any, any>> {
-  protected readonly definition: FD
+export class Form<FS extends FieldSetRaw> {
+  protected readonly definition: FormDefinition<FS>
   protected readonly validationErrors: Ref<FlattenedErrors>
 
   readonly data: Ref<FieldSetData<FS>>
   readonly errors: ComputedRef<FieldSetErrors<FS>>
   readonly hasErrors: ComputedRef<boolean>
 
-  constructor(formDefinition: FD, data: FieldSetData<FS>) {
+  constructor(formDefinition: FormDefinition<FS>, data: FieldSetData<FS>) {
     this.definition = formDefinition
     this.validationErrors = ref({})
 
     this.data = ref<FieldSetData<FS>>(this.definition.fieldSet.getDefault()) as Ref<FieldSetData<FS>>
-    this.errors = computed(() => this.unflattenErrors())
+    this.errors = computed(() => this.hydrateErrors())
     this.hasErrors = computed(() => this.hasAnyError())
   }
 
-  private unflattenErrors(): FieldSetErrors<FS> {
-    return this.#unflattenFieldSetErrors(this.definition.fieldSet, []) as FieldSetErrors<FS>
+  protected hydrateErrors(): FieldSetErrors<FS> {
+    return this.hydrateFieldSetErrors(this.definition.fieldSet, []) as FieldSetErrors<FS>
   }
 
-  #unflattenFieldSetErrors(fieldSet: FieldSet<any>, accessors: string[]): Record<string, any> {
-    const errors: Record<string, any> = {}
+  private hydrateFieldSetErrors(fieldSet: FieldSet<any>, accessors: string[]): Record<string, any> {
+    const errors: Record<string, any> = {
+      non_field_errors: this.getFlatError([...accessors, 'non_field_errors'].join('.')),
+    }
 
     for (const [fieldName, field] of Object.entries(fieldSet.fieldSetRoot)) {
       if (field instanceof FieldSet) {
-        errors[fieldName] = this.#unflattenFieldSetErrors(field, [...accessors, fieldName])
+        errors[fieldName] = this.hydrateFieldSetErrors(field, [...accessors, fieldName])
       } else if (field instanceof ArrayField) {
         const arrayErrors = new ArrayFieldErrors()
+        const dataArray = this.getDataByKeys([...accessors, fieldName])
+        if (dataArray !== null && Array.isArray(dataArray)) {
+          range(dataArray.length).forEach((i) => {
+            if (field.baseField instanceof FieldSet) {
+              arrayErrors.push(this.hydrateFieldSetErrors(field.baseField, [...accessors, fieldName, `${i}`]))
+            } else {
+              arrayErrors.push(this.getFlatError([...accessors, fieldName, `${i}`].join('.')))
+            }
+          })
+        }
         arrayErrors.non_field_errors = this.getFlatError([...accessors, fieldName].join('.'))
         errors[fieldName] = arrayErrors
       } else {
@@ -171,6 +178,14 @@ export class Form<FS extends FieldSetRaw, FD extends FormDefinition<any, any>> {
     }
 
     return errors
+  }
+
+  protected getDataByKeys(accessors: string[]): any {
+    let value: any = this.data.value
+    accessors.forEach((key) => {
+      value = value[key]
+    })
+    return value
   }
 
   protected getFlatError(accessor: string): ErrorList {

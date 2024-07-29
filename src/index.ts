@@ -2,10 +2,10 @@ import { type FieldSetData } from './fields'
 import { booleanField, charField, numberField, dateTimeField, dateField, arrayField, fieldSet } from './factories'
 import { FormDefinition } from './forms'
 import {
-  readOnlyEndpointModelDefinition,
-  singleEndpointModelDefinition,
+  readOnlyEndpointFormDefinition,
+  singleEndpointFormDefinition,
   modelListDefinition,
-  crudModelDefinition,
+  crudApiFormDefinition,
   Paginator,
 } from './apiInterfaces'
 import {
@@ -37,10 +37,10 @@ export {
   FormDefinition,
 
   // API Endpoints
-  readOnlyEndpointModelDefinition,
-  singleEndpointModelDefinition,
+  readOnlyEndpointFormDefinition,
+  singleEndpointFormDefinition,
   modelListDefinition,
-  crudModelDefinition,
+  crudApiFormDefinition,
   Paginator,
 
   // Validators

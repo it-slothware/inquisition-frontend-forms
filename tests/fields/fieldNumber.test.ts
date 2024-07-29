@@ -1,76 +1,76 @@
 import { format as prettyFormat } from 'pretty-format'
-import { dateField, laterThan } from '../src'
+import { numberField, greaterThan } from '../../src'
 
-describe('DateTime field factory', () => {
+describe('Number field factory', () => {
   // No arguments
   test('Without parameters', () => {
-    const field = dateField()
+    const field = numberField()
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(0)
     expect(field.validators.length).toBe(0)
   })
 
   // Single argument
   test('Label value only', () => {
-    const field = dateField('Test label')
+    const field = numberField('Test label')
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(0)
     expect(field.validators.length).toBe(0)
   })
 
   test('Default value only', () => {
-    const field = dateField(new Date())
+    const field = numberField(42)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(42)
     expect(field.validators.length).toBe(0)
   })
 
   test('Nullable only', () => {
-    const field = dateField(true)
+    const field = numberField(true)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(0)
     expect(field.validators.length).toBe(0)
   })
 
   test('Validators only', () => {
-    const field = dateField([laterThan(new Date())])
+    const field = numberField([greaterThan(12)])
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(0)
     expect(field.validators.length).toBe(1)
   })
 
   // Two arguments
   test('Label and default value', () => {
-    const field = dateField('Test label', new Date())
+    const field = numberField('Test label', 42)
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(42)
     expect(field.validators.length).toBe(0)
   })
 
   test('Label and nullable', () => {
-    const field = dateField('Test label', true)
+    const field = numberField('Test label', true)
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(true)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(0)
     expect(field.validators.length).toBe(0)
   })
 
   test('Label and validators', () => {
-    const field = dateField('Test label', [laterThan(new Date())])
+    const field = numberField('Test label', [greaterThan(12)])
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(0)
     expect(field.validators.length).toBe(1)
   })
 
   test('Default value and nullable', () => {
-    const field = dateField(null, true)
+    const field = numberField(null, true)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
@@ -78,40 +78,40 @@ describe('DateTime field factory', () => {
   })
 
   test('Default value and validators', () => {
-    const field = dateField('Test label', [laterThan(new Date())])
+    const field = numberField('Test label', [greaterThan(12)])
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(0)
     expect(field.validators.length).toBe(1)
   })
 
   test('Nullable and validators', () => {
-    const field = dateField(true, [laterThan(new Date())])
+    const field = numberField(true, [greaterThan(12)])
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(0)
     expect(field.validators.length).toBe(1)
   })
 
   // Three arguments
   test('Label, default value and nullable', () => {
-    const field = dateField('Test label', new Date(), true)
+    const field = numberField('Test label', 42, true)
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(true)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(42)
     expect(field.validators.length).toBe(0)
   })
 
   test('Label, default value, validators', () => {
-    const field = dateField('Test label', new Date(), [laterThan(new Date())])
+    const field = numberField('Test label', 42, [greaterThan(12)])
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(42)
     expect(field.validators.length).toBe(1)
   })
 
   test('Default value, nullable, validators', () => {
-    const field = dateField(null, true, [laterThan(new Date())])
+    const field = numberField(null, true, [greaterThan(12)])
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
@@ -120,7 +120,7 @@ describe('DateTime field factory', () => {
 
   // Four argument
   test('Label, default value, nullable, validators', () => {
-    const field = dateField('Test label', null, true, [laterThan(new Date())])
+    const field = numberField('Test label', null, true, [greaterThan(12)])
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
@@ -130,15 +130,15 @@ describe('DateTime field factory', () => {
 
 describe('Test default values', () => {
   test('Default value as callable', () => {
-    const field = dateField(() => new Date())
+    const field = numberField(() => 42)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBeInstanceOf(Date)
+    expect(field.getDefault()).toBe(42)
     expect(field.validators.length).toBe(0)
   })
 
   test('Default value as callable and nullable', () => {
-    const field = dateField(() => null, true)
+    const field = numberField(() => null, true)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
@@ -148,45 +148,39 @@ describe('Test default values', () => {
 
 describe.each([
   // Data to test | nullable | expected result | expect warning
-  [false, false, new Date('2024-07-01 12:34:55'), true],
-  [true, false, new Date('2024-07-01 12:34:55'), true],
-  [null, false, new Date('2024-07-01 12:34:55'), true],
+  [false, false, 0, true],
+  [true, false, 0, true],
+  [null, false, 0, true],
   [null, true, null, false],
-  [[], false, new Date('2024-07-01 12:34:55'), true],
-  [[1, 2, 3], false, new Date('2024-07-01 12:34:55'), true],
-  [{}, false, new Date('2024-07-01 12:34:55'), true],
-  [{ foo: 'bar' }, false, new Date('2024-07-01 12:34:55'), true],
-  [0, false, new Date('2024-07-01 12:34:55'), true],
-  [1, false, new Date('2024-07-01 12:34:55'), true],
-  [12.56, false, new Date('2024-07-01 12:34:55'), true],
-  ['5', false, new Date('2024-07-01 12:34:55'), true],
-  ['12.56', false, new Date('2024-07-01 12:34:55'), true],
-  ['', false, new Date('2024-07-01 12:34:55'), true],
-  ['  ', false, new Date('2024-07-01 12:34:55'), true],
-  ['Some string', false, new Date('2024-07-01 12:34:55'), true],
-  ['2024-07-01T12:34:55+0000', false, new Date('2024-07-01 12:34:55'), false],
-  ['2024-07-01T12:34:55Z', false, new Date('2024-07-01 12:34:55'), false],
+  [[], false, 0, true],
+  [[1, 2, 3], false, 0, true],
+  [{}, false, 0, true],
+  [{ foo: 'bar' }, false, 0, true],
+  [0, false, 0, false],
+  [1, false, 1, false],
+  [12.56, false, 12.56, false],
+  ['5', false, 5, false],
+  ['12.56', false, 12.56, false],
+  ['-23', false, -23, false],
+  ['  44  ', false, 44, false],
+  ['  -88  ', false, -88, false],
+  ['1 000', false, 1000, false],
+  ['-9 999 999', false, -9999999, false],
+  ['', false, 0, true],
+  ['  ', false, 0, true],
+  ['Some string', false, 0, true],
 ])('Test .toNative()', (data, nullable, expected, expectWarning) => {
   beforeEach(() => {
     jest.spyOn(console, 'warn').mockImplementation()
-    jest.useFakeTimers().setSystemTime(new Date('2024-07-01 12:34:55'))
   })
 
   afterEach(() => {
-    jest.useRealTimers()
     jest.restoreAllMocks()
   })
 
   test(`.toNative(${prettyFormat(data)})`, () => {
-    const field = dateField('', nullable)
-    const nativeValue = field.toNative(data)
-    if (nativeValue === null) expect(nativeValue).toBe(null)
-    else expect(nativeValue).toBeInstanceOf(Date)
+    const field = numberField('', nullable)
+    expect(field.toNative(data)).toBe(expected)
     expect(console.warn).toHaveBeenCalledTimes(expectWarning ? 1 : 0)
   })
-})
-
-test('.fromNative()', () => {
-  const field = dateField()
-  expect(field.fromNative(new Date(2024, 4, 4, 12, 35, 59))).toBe('2024-05-04')
 })

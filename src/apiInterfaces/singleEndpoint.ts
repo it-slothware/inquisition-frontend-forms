@@ -1,42 +1,34 @@
 import { type Ref, ref } from 'vue'
-import { ValidatedModelInterface } from './types'
+import { type APIUrl } from './types'
 import { getAxiosInstance } from '../axios'
-import { FormDefinition, Form } from '../forms'
-import { type FieldSetRaw, type FieldSetData, type FieldSetErrors, FieldSet } from '../fields'
+import { type FieldSetRaw, type FieldSetData, FieldSet } from '../fields'
+import { BaseWritableApiFormDefinition, BaseWritableApiForm } from './base'
 
-export class SingleEndpointFormDefinition<T extends string, FS extends FieldSetRaw> extends FormDefinition<FS, {}> {
-  readonly url: string
+export class SingleEndpointFormDefinition<FS extends FieldSetRaw> extends BaseWritableApiFormDefinition<FS> {
+  readonly url: APIUrl
   readonly fieldSet: FieldSet<FS>
 
-  constructor(url: T, rawFieldSet: FS) {
-    super(rawFieldSet)
+  constructor(url: APIUrl, rawFieldSet: FS) {
+    super(url, rawFieldSet)
     this.url = url
   }
 
-  new(initialData?: Object): SingleEndpointModel<FS> {
-    return new SingleEndpointModel<FS>(this, this.fieldSet.toNative(initialData))
+  new(initialData?: Partial<FieldSetData<FS>>): SingleEndpointForm<FS> {
+    return new SingleEndpointForm<FS>(this, this.fieldSet.toNative(initialData))
   }
 }
 
-export class SingleEndpointForm<FS extends FieldSetRaw, FD extends SingleEndpointFormDefinition<any, FS>> extends Form<
-  FS,
-  FD
-> {
-  readonly definition: SingleEndpointFormDefinition<string, FS>
+export class SingleEndpointForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS> {
+  readonly definition: SingleEndpointFormDefinition<FS>
   readonly ref: Ref<FieldSetData<FS>>
-  readonly errors: Ref<FieldSetErrors<FS>>
 
-  constructor(modelDefinition: SingleEndpointFormDefinition<string, FS>, data: FieldSetData<FS>) {
-    this.definition = modelDefinition
+  constructor(formDefinition: SingleEndpointFormDefinition<FS>, data: FieldSetData<FS>) {
+    super(formDefinition, data)
+    this.definition = formDefinition
     this.ref = ref(data) as Ref<FieldSetData<FS>>
-    this.errors = ref({}) as Ref<FieldSetErrors<FS>>
   }
 
-  resetValidation() {
-    this.errors.value = {} as FieldSetErrors<FS>
-  }
-
-  get() {
+  get(): Promise<SingleEndpointForm<FS>> {
     const api = getAxiosInstance()
     return api.get(`${this.definition.url}`).then((response) => {
       this.ref.value = this.definition.fieldSet.toNative(response.data)
@@ -44,7 +36,7 @@ export class SingleEndpointForm<FS extends FieldSetRaw, FD extends SingleEndpoin
     })
   }
 
-  post() {
+  post(): Promise<SingleEndpointForm<FS>> {
     const data = this.definition.fieldSet.fromNative(this.ref.value)
 
     const api = getAxiosInstance()
@@ -55,8 +47,8 @@ export class SingleEndpointForm<FS extends FieldSetRaw, FD extends SingleEndpoin
         return this
       })
       .catch((error) => {
-        this.errors.value = error.response.data
-        throw error
+        this.apiErrors.value = this.flattenApiErrors(this.definition.fieldSet, error.response.data)
+        return this
       })
   }
 }

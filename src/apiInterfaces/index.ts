@@ -1,7 +1,7 @@
 import { ReadOnlyEndpointFormDefinition, readOnlyEndpointFormDefinition } from './readOnlyEndpoint'
 import { SingleEndpointFormDefinition, singleEndpointFormDefinition } from './singleEndpoint'
 import { ModelListDefinition, modelListDefinition } from './list'
-import { CrudAPIFormDefinition, crudModelDefinition } from './crud'
+import { CrudAPIFormDefinition, crudApiFormDefinition } from './crud'
 import { Paginator } from './paginator'
 
 export {
@@ -19,7 +19,7 @@ export {
 
   // CRUD
   CrudAPIFormDefinition,
-  crudModelDefinition,
+  crudApiFormDefinition,
 
   // Pagination
   Paginator,

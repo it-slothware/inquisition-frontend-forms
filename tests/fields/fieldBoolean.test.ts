@@ -1,126 +1,120 @@
 import { format as prettyFormat } from 'pretty-format'
-import { charField, notBlank } from '../src'
+import { booleanField, isTrue } from '../../src'
 
-describe('Char field factory', () => {
+describe('Boolean field factory', () => {
   // No arguments
   test('Without parameters', () => {
-    const field = charField()
+    const field = booleanField()
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBe('')
+    expect(field.getDefault()).toBe(false)
     expect(field.validators.length).toBe(0)
   })
 
   // Single argument
-  test('Default value only', () => {
-    const field = charField('Some default')
-    expect(field.label).toBe('')
+  test('Label only', () => {
+    const field = booleanField('Test label')
+    expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBe('Some default')
+    expect(field.getDefault()).toBe(false)
     expect(field.validators.length).toBe(0)
   })
 
-  test('Nullable only', () => {
-    const field = charField(true)
+  test('Default value only', () => {
+    const field = booleanField(true)
     expect(field.label).toBe('')
-    expect(field.nullable).toBe(true)
-    expect(field.getDefault()).toBe('')
+    expect(field.nullable).toBe(false)
+    expect(field.getDefault()).toBe(true)
     expect(field.validators.length).toBe(0)
   })
 
   test('Validators only', () => {
-    const field = charField([notBlank])
+    const field = booleanField([isTrue])
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBe('')
+    expect(field.getDefault()).toBe(false)
     expect(field.validators.length).toBe(1)
-    expect(field.validators[0]).toBe(notBlank)
   })
 
   // Two arguments
   test('Label and default value', () => {
-    const field = charField('Test label', 'Some default')
+    const field = booleanField('Test label', true)
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBe('Some default')
+    expect(field.getDefault()).toBe(true)
     expect(field.validators.length).toBe(0)
   })
 
+  test('Label and validators', () => {
+    const field = booleanField('Test label', [isTrue])
+    expect(field.label).toBe('Test label')
+    expect(field.nullable).toBe(false)
+    expect(field.getDefault()).toBe(false)
+    expect(field.validators.length).toBe(1)
+  })
+
   test('Default value and nullable', () => {
-    const field = charField(null, true)
+    const field = booleanField(null, true)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
     expect(field.validators.length).toBe(0)
   })
 
-  test('Default value and validators', () => {
-    const field = charField('Some default', [notBlank])
+  test('Default value, validators', () => {
+    const field = booleanField(true, [isTrue])
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBe('Some default')
+    expect(field.getDefault()).toBe(true)
     expect(field.validators.length).toBe(1)
-    expect(field.validators[0]).toBe(notBlank)
-  })
-
-  test('Nullable and validators', () => {
-    const field = charField(true, [notBlank])
-    expect(field.label).toBe('')
-    expect(field.nullable).toBe(true)
-    expect(field.getDefault()).toBe('')
-    expect(field.validators.length).toBe(1)
-    expect(field.validators[0]).toBe(notBlank)
   })
 
   // Three arguments
   test('Label, default value and nullable', () => {
-    const field = charField('Test label', 'Some default', true)
+    const field = booleanField('Test label', true, true)
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(true)
-    expect(field.getDefault()).toBe('Some default')
+    expect(field.getDefault()).toBe(true)
     expect(field.validators.length).toBe(0)
   })
 
   test('Label, default value, validators', () => {
-    const field = charField('Test label', 'Some default', [notBlank])
+    const field = booleanField('Test label', true, [isTrue])
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBe('Some default')
+    expect(field.getDefault()).toBe(true)
     expect(field.validators.length).toBe(1)
-    expect(field.validators[0]).toBe(notBlank)
   })
 
   test('Default value, nullable, validators', () => {
-    const field = charField(null, true, [notBlank])
+    const field = booleanField(null, true, [isTrue])
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
     expect(field.validators.length).toBe(1)
-    expect(field.validators[0]).toBe(notBlank)
   })
 
   // Four argument
   test('Label, default value, nullable, validators', () => {
-    const field = charField('Test label', null, true, [notBlank])
+    const field = booleanField('Test label', null, true, [isTrue])
     expect(field.label).toBe('Test label')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
     expect(field.validators.length).toBe(1)
-    expect(field.validators[0]).toBe(notBlank)
   })
 })
 
 describe('Test default values', () => {
   test('Default value as callable', () => {
-    const field = charField(() => 'Some default')
+    const field = booleanField(() => true)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(false)
-    expect(field.getDefault()).toBe('Some default')
+    expect(field.getDefault()).toBe(true)
     expect(field.validators.length).toBe(0)
   })
 
   test('Default value as callable and nullable', () => {
-    const field = charField(() => null, true)
+    const field = booleanField(() => null, true)
     expect(field.label).toBe('')
     expect(field.nullable).toBe(true)
     expect(field.getDefault()).toBe(null)
@@ -130,21 +124,30 @@ describe('Test default values', () => {
 
 describe.each([
   // Data to test | nullable | expected result | expect warning
-  [false, false, 'false'],
-  [true, false, 'true'],
-  [null, false, 'null'],
-  [null, true, null],
-  [[], false, '[]'],
-  [[1, 2, 3], false, '[1,2,3]'],
-  [{}, false, '[object Object]'],
-  [{ foo: 'bar' }, false, '[object Object]'],
-  [0, false, '0'],
-  [1, false, '1'],
-  ['', false, ''],
-  ['Some string', false, 'Some string'],
-])('Test .toNative()', (data, nullable, expected) => {
+  [false, false, false, false],
+  [true, false, true, false],
+  [null, false, false, true],
+  [null, true, null, false],
+  [[], false, false, true],
+  [[1, 2, 3], false, true, true],
+  [{}, false, false, true],
+  [{ foo: 'bar' }, false, true, true],
+  [0, false, false, true],
+  [1, false, true, true],
+  ['', false, false, true],
+  ['Some string', false, true, true],
+])('Test .toNative()', (data, nullable, expected, expectWarning) => {
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation()
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   test(`.toNative(${prettyFormat(data)})`, () => {
-    const field = charField('', nullable)
+    const field = booleanField(false, nullable)
     expect(field.toNative(data)).toBe(expected)
+    expect(console.warn).toHaveBeenCalledTimes(expectWarning ? 1 : 0)
   })
 })

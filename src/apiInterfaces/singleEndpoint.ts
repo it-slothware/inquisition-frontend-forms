@@ -1,6 +1,6 @@
 import { type Ref, ref } from 'vue'
-import { type APIUrl } from './types'
-import { getAxiosInstance } from '../axios'
+import { type APIUrl, type CallbackFunction } from './types'
+import { getAxiosInstance, showSuccessNotification, showErrorNotification } from '../configurable'
 import { type FieldSetRaw, type FieldSetData, FieldSet } from '../fields'
 import { BaseWritableApiFormDefinition, BaseWritableApiForm } from './base'
 import { getURLSearchParamsSize } from './utils'
@@ -30,10 +30,24 @@ export class SingleEndpointForm<FS extends FieldSetRaw> extends BaseWritableApiF
   readonly definition: SingleEndpointFormDefinition<FS>
   readonly ref: Ref<FieldSetData<FS>>
 
+  private readonly postGetCallbacks: CallbackFunction[]
+  private readonly postPostCallbacks: CallbackFunction[]
+
   constructor(formDefinition: SingleEndpointFormDefinition<FS>, data: FieldSetData<FS>) {
     super(formDefinition, data)
     this.definition = formDefinition
     this.ref = ref(data) as Ref<FieldSetData<FS>>
+
+    this.postGetCallbacks = []
+    this.postPostCallbacks = []
+  }
+
+  postGet(func: CallbackFunction) {
+    this.postGetCallbacks.push(func)
+  }
+
+  postPost(func: CallbackFunction) {
+    this.postPostCallbacks.push(func)
   }
 
   get(queryParams?: Record<string, any>): Promise<SingleEndpointForm<FS>> {
@@ -51,10 +65,18 @@ export class SingleEndpointForm<FS extends FieldSetRaw> extends BaseWritableApiF
     }
 
     const api = getAxiosInstance()
-    return api.get(url).then((response) => {
-      this.ref.value = this.definition.fieldSet.toNative(response.data)
-      return this
-    })
+    return api
+      .get(url)
+      .then((response) => {
+        this.ref.value = this.definition.fieldSet.toNative(response.data)
+        this.postGetCallbacks.forEach((func) => func(true))
+        return this
+      })
+      .catch(() => {
+        showErrorNotification('Hiba a betöltés közben')
+        this.postGetCallbacks.forEach((func) => func(false))
+        return this
+      })
   }
 
   post(): Promise<SingleEndpointForm<FS>> {
@@ -65,10 +87,14 @@ export class SingleEndpointForm<FS extends FieldSetRaw> extends BaseWritableApiF
       .post(this.getApiURL(), data)
       .then((response) => {
         this.ref.value = this.definition.fieldSet.toNative(response.data)
+        showSuccessNotification('Sikeres mentés')
+        this.postPostCallbacks.forEach((func) => func(true))
         return this
       })
       .catch((error) => {
         this.apiErrors.value = this.flattenApiErrors(this.definition.fieldSet, error.response.data)
+        showErrorNotification('Hiba a mentés közben')
+        this.postPostCallbacks.forEach((func) => func(false))
         return this
       })
   }

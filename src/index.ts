@@ -1,7 +1,9 @@
-import { type FieldSetData } from './fields'
+import { type FieldSetData, type InferredFieldType, type IdTypeFromFieldSet } from './fields'
 import { booleanField, charField, numberField, dateTimeField, dateField, arrayField, fieldSet } from './factories'
 import { FormDefinition } from './forms'
 import {
+  type ModelListType,
+  type FilterOptionsFrom,
   readOnlyEndpointFormDefinition,
   singleEndpointFormDefinition,
   modelListDefinition,
@@ -20,11 +22,23 @@ import {
   laterThan,
   soonerThan,
 } from './validators'
-import { getAxiosInstance, setAxiosInstance } from './axios'
+import {
+  getAxiosInstance,
+  setAxiosInstance,
+  showSuccessNotification,
+  showWarningNotification,
+  showErrorNotification,
+  setShowSuccessNotification,
+  setShowWarningNotification,
+  setShowErrorNotification,
+} from './configurable'
+import { FieldSetDataFrom } from './types'
 
 export {
   // Fields
   FieldSetData,
+  InferredFieldType,
+  IdTypeFromFieldSet,
   booleanField,
   charField,
   numberField,
@@ -36,7 +50,9 @@ export {
   // Forms
   FormDefinition,
 
-  // API Endpoints
+  // API interfaces
+  ModelListType,
+  FilterOptionsFrom,
   readOnlyEndpointFormDefinition,
   singleEndpointFormDefinition,
   modelListDefinition,
@@ -58,4 +74,13 @@ export {
   // Axios
   getAxiosInstance,
   setAxiosInstance,
+  showSuccessNotification,
+  showWarningNotification,
+  showErrorNotification,
+  setShowSuccessNotification,
+  setShowWarningNotification,
+  setShowErrorNotification,
+
+  // Types
+  FieldSetDataFrom,
 }

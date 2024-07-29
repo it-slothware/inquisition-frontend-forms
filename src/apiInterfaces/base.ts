@@ -5,13 +5,11 @@ import {
   type FieldSetRaw,
   type FieldSetData,
   type FlattenedErrors,
-  type FieldSetErrors,
   FieldSet,
   ArrayField,
   extendErrors,
   ErrorList,
 } from '../fields'
-import { deepMerge } from './utils'
 
 export class BaseApiFormDefinition<FS extends FieldSetRaw> extends FormDefinition<FS> {
   readonly url: APIUrl

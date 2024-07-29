@@ -1,7 +1,7 @@
 import { ComputedRef, type Ref, ref } from 'vue'
-import type { APIUrl } from './types'
+import type { APIUrl, CallbackFunction } from './types'
 import { type FieldSetRaw, type FieldSetData, type IdTypeFromFieldSet, type FieldSetErrors } from '../fields'
-import { getAxiosInstance } from '../axios'
+import { getAxiosInstance, showSuccessNotification, showErrorNotification } from '../configurable'
 import { BaseWritableApiFormDefinition, BaseWritableApiForm } from './base'
 import { createULR } from './utils'
 
@@ -50,6 +50,11 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
   ref: Ref<FieldSetData<FS>>
   readonly errors: ComputedRef<FieldSetErrors<FS>>
 
+  private readonly postRetrieveCallbacks: CallbackFunction[]
+  private readonly postCreateCallbacks: CallbackFunction[]
+  private readonly postUpdateCallbacks: CallbackFunction[]
+  private readonly postDeleteCallbacks: CallbackFunction[]
+
   constructor(formDefinition: CrudAPIFormDefinition<FS, any>, data: FieldSetData<FS>) {
     super(formDefinition, data)
     this.definition = formDefinition
@@ -62,6 +67,27 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
       }
     }
     Object.assign(this, temp)
+
+    this.postRetrieveCallbacks = []
+    this.postCreateCallbacks = []
+    this.postUpdateCallbacks = []
+    this.postDeleteCallbacks = []
+  }
+
+  postRetrieve(func: CallbackFunction) {
+    this.postRetrieveCallbacks.push(func)
+  }
+
+  postCreate(func: CallbackFunction) {
+    this.postCreateCallbacks.push(func)
+  }
+
+  postUpdate(func: CallbackFunction) {
+    this.postUpdateCallbacks.push(func)
+  }
+
+  postDelete(func: CallbackFunction) {
+    this.postDeleteCallbacks.push(func)
   }
 
   retrieve(): Promise<CrudApiForm<FS>> {
@@ -78,9 +104,12 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
       .get(this.getApiURL(modelId))
       .then((response) => {
         this.ref.value = this.definition.fieldSet.toNative(response.data)
+        this.postRetrieveCallbacks.forEach((func) => func(true))
         return this
       })
       .catch(() => {
+        showErrorNotification('Hiba a betöltés közben')
+        this.postRetrieveCallbacks.forEach((func) => func(false))
         return this
       })
   }
@@ -91,9 +120,13 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
       .post(this.getApiURL(), this.definition.fieldSet.fromNative(this.ref.value))
       .then((response) => {
         this.ref.value = this.definition.fieldSet.toNative(response.data)
+        showSuccessNotification('Sikeres mentés')
+        this.postCreateCallbacks.forEach((func) => func(true))
         return this
       })
       .catch(() => {
+        showErrorNotification('Hiba a mentés közben')
+        this.postCreateCallbacks.forEach((func) => func(false))
         return this
       })
   }
@@ -112,9 +145,13 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
       .put(this.getApiURL(modelId), this.definition.fieldSet.fromNative(this.ref.value))
       .then((response) => {
         this.ref.value = this.definition.fieldSet.toNative(response.data)
+        showSuccessNotification('Sikeres mentés')
+        this.postUpdateCallbacks.forEach((func) => func(true))
         return this
       })
       .catch(() => {
+        showErrorNotification('Hiba a mentés közben')
+        this.postUpdateCallbacks.forEach((func) => func(false))
         return this
       })
   }
@@ -133,9 +170,13 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
     return api
       .delete(this.getApiURL(modelId))
       .then(() => {
+        showSuccessNotification('Sikeres törlés')
+        this.postDeleteCallbacks.forEach((func) => func(true))
         return this
       })
       .catch(() => {
+        showErrorNotification('Hiba a törlés közben')
+        this.postDeleteCallbacks.forEach((func) => func(false))
         return this
       })
   }

@@ -30,18 +30,6 @@ type CountOfSubString<
   C extends unknown[] = [],
 > = T extends `${string}${S}${infer R}` ? CountOfSubString<R, S, [1, ...C]> : C['length']
 
-export type FormExtraMethod<T> = (this: T, ...args: any[]) => any
-export type FormExtraMethodsDefinition<F extends Form<any>> = {
-  [key: string]: FormExtraMethod<F>
-}
-
-export type FormExtraMethods<F extends Form<any>, EMD extends FormExtraMethodsDefinition<F>> = {
-  [key in keyof EMD]: (...args: Parameters<EMD[key]>) => ReturnType<EMD[key]>
-}
-
-export type FormWithExtraMethods<F extends Form<any>, EMD extends FormExtraMethodsDefinition<F>> = F &
-  FormExtraMethods<F, EMD>
-
 type ArrayFieldNamesFromArrayField<T extends ArrayField<any, any>, C extends unknown[]> = C extends [...infer CR, any]
   ? T extends ArrayField<infer R, any>
     ? R extends FieldSetRaw

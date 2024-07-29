@@ -10,8 +10,8 @@ function testPictureValidator(dataToValidate: any) {
 }
 
 const mockedAxios = axios as jest.Mocked<typeof axios>
-jest.mock('../../src/axios', () => {
-  const originalModule = jest.requireActual('../../src/axios')
+jest.mock('../../src/configurable', () => {
+  const originalModule = jest.requireActual('../../src/configurable')
 
   return {
     __esModule: true,

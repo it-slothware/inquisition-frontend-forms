@@ -1,6 +1,6 @@
 import { ReadOnlyEndpointFormDefinition, readOnlyEndpointFormDefinition } from './readOnlyEndpoint'
 import { SingleEndpointFormDefinition, singleEndpointFormDefinition } from './singleEndpoint'
-import { ModelListDefinition, modelListDefinition } from './list'
+import { type ModelListType, type FilterOptionsFrom, ModelListDefinition, modelListDefinition } from './list'
 import { CrudAPIFormDefinition, crudApiFormDefinition } from './crud'
 import { Paginator } from './paginator'
 
@@ -14,6 +14,8 @@ export {
   singleEndpointFormDefinition,
 
   // Lists
+  ModelListType,
+  FilterOptionsFrom,
   ModelListDefinition,
   modelListDefinition,
 

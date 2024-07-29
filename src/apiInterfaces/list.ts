@@ -1,9 +1,10 @@
 import { type Ref, ref } from 'vue'
-import { getAxiosInstance } from '../axios'
+import { getAxiosInstance, showErrorNotification } from '../configurable'
 import { type FieldSetRaw, type FieldSetData, FieldBase, FieldSet } from '../fields'
 
 import { getURLSearchParamsSize } from './utils'
 import { Paginator, DEFAULT_PAGE_SIZE } from './paginator'
+import type { CallbackFunction } from './types'
 
 // Type definitions
 type FilterOptions<T extends FieldSetRaw> = {
@@ -86,6 +87,8 @@ class ModelList<FS extends FieldSetRaw, FOFS extends FieldSetRaw> {
   readonly searchText: Ref<string>
   readonly filterOptions: Ref<FilterOptions<FOFS>>
 
+  private readonly postFetchCallbacks: CallbackFunction[]
+
   constructor(
     listDefinition: ModelListDefinition<FS, boolean, FOFS, ListExtraMethodDefinitions<any>>,
     filterOptions: FilterOptions<FOFS>,
@@ -103,6 +106,12 @@ class ModelList<FS extends FieldSetRaw, FOFS extends FieldSetRaw> {
       }
     }
     Object.assign(this, temp)
+
+    this.postFetchCallbacks = []
+  }
+
+  postFetch(func: CallbackFunction) {
+    this.postFetchCallbacks.push(func)
   }
 
   setSearchText(searchText: string): void {
@@ -137,10 +146,22 @@ class ModelList<FS extends FieldSetRaw, FOFS extends FieldSetRaw> {
     }
 
     const api = getAxiosInstance()
-    return api.get<ListApiResponse<FieldSetData<FS>>>(url).then((response) => {
-      this.entities.value = response.data.map((d) => this.definition.fieldSet.toNative(d))
-      return this
-    })
+    return api
+      .get<ListApiResponse<FieldSetData<FS>>>(url)
+      .then((response) => {
+        this.entities.value = response.data.map((d) => this.definition.fieldSet.toNative(d))
+        this.postFetchCallbacks.forEach((func) => {
+          func(true)
+        })
+        return this
+      })
+      .catch(() => {
+        showErrorNotification('Hiba a betöltés közben')
+        this.postFetchCallbacks.forEach((func) => {
+          func(false)
+        })
+        return this
+      })
   }
 }
 
@@ -155,9 +176,7 @@ class PaginatedModelList<FS extends FieldSetRaw, FOFS extends FieldSetRaw> exten
     super(listDefinition, filterOptions, searchText)
     this.paginator = new Paginator()
     this.paginator.onChange(() => {
-      this.fetch().catch(() => {
-        // TODO implement error notifications
-      })
+      this.fetch()
     })
   }
 
@@ -180,16 +199,27 @@ class PaginatedModelList<FS extends FieldSetRaw, FOFS extends FieldSetRaw> exten
     }
 
     const api = getAxiosInstance()
-    return api.get<PaginatedListApiResponse<FieldSetData<FS>>>(url).then((response) => {
-      this.entities.value = response.data.data.map((d) => this.definition.fieldSet.toNative(d))
-      this.paginator.setTotal(response.data.total)
-      return this
-    })
+    return api
+      .get<PaginatedListApiResponse<FieldSetData<FS>>>(url)
+      .then((response) => {
+        this.entities.value = response.data.data.map((d) => this.definition.fieldSet.toNative(d))
+        this.paginator.setTotal(response.data.total)
+        this.postFetchCallbacks.forEach((func) => {
+          func(true)
+        })
+        return this
+      })
+      .catch(() => {
+        showErrorNotification('Hiba a betöltés közben')
+        this.postFetchCallbacks.forEach((func) => {
+          func(false)
+        })
+        return this
+      })
   }
 }
 
 export type ModelListType = InstanceType<typeof ModelList> | InstanceType<typeof PaginatedModelList>
-export type ModelDataFrom<T> = T extends ModelListDefinition<infer R, any, any, any> ? FieldSetData<R> : never
 export type FilterOptionsFrom<T> = T extends ModelListDefinition<any, any, infer R, any> ? Ref<FieldSetData<R>> : never
 
 export function modelListDefinition<

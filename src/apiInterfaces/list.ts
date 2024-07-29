@@ -87,7 +87,7 @@ class ModelList<FS extends FieldSetRaw, FOFS extends FieldSetRaw> {
   readonly searchText: Ref<string>
   readonly filterOptions: Ref<FilterOptions<FOFS>>
 
-  private readonly postFetchCallbacks: CallbackFunction[]
+  protected readonly postFetchCallbacks: CallbackFunction[]
 
   constructor(
     listDefinition: ModelListDefinition<FS, boolean, FOFS, ListExtraMethodDefinitions<any>>,

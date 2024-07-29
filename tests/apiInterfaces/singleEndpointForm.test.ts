@@ -132,7 +132,7 @@ describe('Single endpoint form', () => {
     })
   })
 
-  test('API errors', () => {
+  test('API errors', async () => {
     const error = {
       response: {
         data: {
@@ -182,66 +182,62 @@ describe('Single endpoint form', () => {
     form.pushRelated('address.images')
     form.pushRelated('address.images')
 
-    form.post().finally(() => {
-      const a = form.apiErrors.value
-      const b = form.errors.value
-      const c = 12
+    await form.post()
 
-      expect(form.apiErrors.value).toStrictEqual({
-        'address.city': ['Not good'],
-        'address.images.1.url': ['invalid url'],
-        'address.images.2.non_field_errors': ['Missing something'],
-        'address.non_field_errors': ['Invalid address'],
-        id: ['Name error'],
-        'images.0': [],
-        'images.1': ['Not valid image'],
-        name: ['ID error'],
-        non_field_errors: ['Non field error'],
-        'users.1.name': ['required'],
-        'users.1.non_field_errors': ['non field inner'],
-        'users.1.permissions.0': [],
-        'users.1.permissions.1': ['required'],
-        'users.1.pictures.1.non_field_errors': ['inner picture'],
-        'users.1.pictures.1.url': ['url error'],
-      })
-      expect(form.errors.value).toStrictEqual({
-        id: ['Name error'],
-        name: ['ID error'],
-        non_field_errors: ['Non field error'],
-        address: {
-          city: ['Not good'],
-          documents: new ArrayFieldErrors(),
-          images: new ArrayFieldErrors(
-            { url: [], non_field_errors: [] },
-            { url: ['invalid url'], non_field_errors: [] },
-            { url: [], non_field_errors: ['Missing something'] },
-          ),
-          inner: {
-            photos: new ArrayFieldErrors(),
-            non_field_errors: [],
-          },
-          non_field_errors: ['Invalid address'],
-        },
-        images: new ArrayFieldErrors([], ['Not valid image']),
-        users: new ArrayFieldErrors(
-          {
-            name: [],
-            pictures: new ArrayFieldErrors(),
-            permissions: new ArrayFieldErrors(),
-            non_field_errors: [],
-          },
-          {
-            name: ['required'],
-            pictures: new ArrayFieldErrors(
-              { url: [], non_field_errors: [] },
-              { url: ['url error'], non_field_errors: ['inner picture'] },
-              { url: [], non_field_errors: [] },
-            ),
-            permissions: new ArrayFieldErrors([], ['required']),
-            non_field_errors: ['non field inner'],
-          },
+    expect(form.apiErrors.value).toStrictEqual({
+      'address.city': ['Not good'],
+      'address.images.1.url': ['invalid url'],
+      'address.images.2.non_field_errors': ['Missing something'],
+      'address.non_field_errors': ['Invalid address'],
+      id: ['Name error'],
+      'images.0': [],
+      'images.1': ['Not valid image'],
+      name: ['ID error'],
+      non_field_errors: ['Non field error'],
+      'users.1.name': ['required'],
+      'users.1.non_field_errors': ['non field inner'],
+      'users.1.permissions.0': [],
+      'users.1.permissions.1': ['required'],
+      'users.1.pictures.1.non_field_errors': ['inner picture'],
+      'users.1.pictures.1.url': ['url error'],
+    })
+    expect(form.errors.value).toStrictEqual({
+      id: ['Name error'],
+      name: ['ID error'],
+      non_field_errors: ['Non field error'],
+      address: {
+        city: ['Not good'],
+        documents: new ArrayFieldErrors(),
+        images: new ArrayFieldErrors(
+          { url: [], non_field_errors: [] },
+          { url: ['invalid url'], non_field_errors: [] },
+          { url: [], non_field_errors: ['Missing something'] },
         ),
-      })
+        inner: {
+          photos: new ArrayFieldErrors(),
+          non_field_errors: [],
+        },
+        non_field_errors: ['Invalid address'],
+      },
+      images: new ArrayFieldErrors([], ['Not valid image']),
+      users: new ArrayFieldErrors(
+        {
+          name: [],
+          pictures: new ArrayFieldErrors(),
+          permissions: new ArrayFieldErrors(),
+          non_field_errors: [],
+        },
+        {
+          name: ['required'],
+          pictures: new ArrayFieldErrors(
+            { url: [], non_field_errors: [] },
+            { url: ['url error'], non_field_errors: ['inner picture'] },
+            { url: [], non_field_errors: [] },
+          ),
+          permissions: new ArrayFieldErrors([], ['required']),
+          non_field_errors: ['non field inner'],
+        },
+      ),
     })
   })
 })

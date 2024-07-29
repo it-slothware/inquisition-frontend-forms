@@ -4,10 +4,15 @@ export function getURLSearchParamsSize(searchParams: URLSearchParams): number {
 }
 
 export function createULR(...args: any[]) {
-  return args
+  let url = args
+    .filter((a) => !!a)
     .map((a) => String(a))
     .join('/')
     .replace(/([^:])(\/\/+)/g, '$1/')
+
+  if (!url.startsWith('/')) url = '/' + url
+  if (!url.endsWith('/')) url += '/'
+  return url
 }
 
 function isObject(item: any): boolean {

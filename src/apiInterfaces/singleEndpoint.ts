@@ -3,6 +3,7 @@ import { type APIUrl } from './types'
 import { getAxiosInstance } from '../axios'
 import { type FieldSetRaw, type FieldSetData, FieldSet } from '../fields'
 import { BaseWritableApiFormDefinition, BaseWritableApiForm } from './base'
+import { getURLSearchParamsSize } from './utils'
 
 export class SingleEndpointFormDefinition<FS extends FieldSetRaw> extends BaseWritableApiFormDefinition<FS> {
   readonly url: APIUrl
@@ -14,7 +15,14 @@ export class SingleEndpointFormDefinition<FS extends FieldSetRaw> extends BaseWr
   }
 
   new(initialData?: Partial<FieldSetData<FS>>): SingleEndpointForm<FS> {
+    if (!initialData) initialData = {}
     return new SingleEndpointForm<FS>(this, this.fieldSet.toNative(initialData))
+  }
+
+  fetch(queryParams?: Record<string, any>): SingleEndpointForm<FS> {
+    const model = new SingleEndpointForm<FS>(this, this.fieldSet.toNative({}))
+    model.get(queryParams)
+    return model
   }
 }
 
@@ -28,9 +36,22 @@ export class SingleEndpointForm<FS extends FieldSetRaw> extends BaseWritableApiF
     this.ref = ref(data) as Ref<FieldSetData<FS>>
   }
 
-  get(): Promise<SingleEndpointForm<FS>> {
+  get(queryParams?: Record<string, any>): Promise<SingleEndpointForm<FS>> {
+    const params = new URLSearchParams()
+
+    if (queryParams !== undefined) {
+      for (const [key, value] of Object.entries(queryParams)) {
+        params.append(key, value)
+      }
+    }
+
+    let url = this.getApiURL()
+    if (getURLSearchParamsSize(params) > 0) {
+      url += `?${params.toString()}`
+    }
+
     const api = getAxiosInstance()
-    return api.get(`${this.definition.url}`).then((response) => {
+    return api.get(url).then((response) => {
       this.ref.value = this.definition.fieldSet.toNative(response.data)
       return this
     })
@@ -41,7 +62,7 @@ export class SingleEndpointForm<FS extends FieldSetRaw> extends BaseWritableApiF
 
     const api = getAxiosInstance()
     return api
-      .post(`${this.definition.url}`, data)
+      .post(this.getApiURL(), data)
       .then((response) => {
         this.ref.value = this.definition.fieldSet.toNative(response.data)
         return this

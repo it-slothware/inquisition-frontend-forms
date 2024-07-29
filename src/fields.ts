@@ -356,8 +356,8 @@ export function isFormFieldSet(field: FieldBase<any, any> | FieldSetRaw): field 
   return field instanceof FieldSet
 }
 
-export type InferredFieldType<T> = T extends FieldBase<any, infer R> ? R : never
+export type InferredFieldType<T> = T extends FieldBase<infer R, any> ? R : never
 
-export type IdTypeFromFieldSet<FS extends FieldSetRaw> = FS extends { id: FieldBase<any> }
+export type IdTypeFromFieldSet<FS extends FieldSetRaw> = FS extends { id: FieldBase<any, any> }
   ? InferredFieldType<FS['id']>
-  : never
+  : unknown

@@ -28,11 +28,11 @@ export class ReadOnlyEndpointForm<FS extends FieldSetRaw> extends BaseApiForm<FS
     this.ref = ref<FieldSetData<FS>>(data) as Ref<FieldSetData<FS>>
   }
 
-  get(filterOptions?: Record<string, any>) {
+  get(queryParams?: Record<string, any>) {
     const params = new URLSearchParams()
 
-    if (filterOptions !== undefined) {
-      for (const [key, value] of Object.entries(filterOptions)) {
+    if (queryParams !== undefined) {
+      for (const [key, value] of Object.entries(queryParams)) {
         params.append(key, value)
       }
     }

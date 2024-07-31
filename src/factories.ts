@@ -54,7 +54,12 @@ export function booleanField<P extends boolean>(
   nullable: P,
   validators: FormFieldValidator[],
 ): BooleanField<P>
-export function booleanField<P extends boolean = false>(argFirst?, argSecond?, argThird?, argFourth?): BooleanField<P> {
+export function booleanField<P extends boolean = false>(
+  argFirst?: any,
+  argSecond?: any,
+  argThird?: any,
+  argFourth?: any,
+): BooleanField<P> {
   let label: string = ''
   let defaultValue: FieldDefault<boolean, P> = false
   let nullable: P = false as P
@@ -133,7 +138,12 @@ export function charField<P extends boolean>(
   nullable: P,
   validators: FormFieldValidator[],
 ): CharField<P>
-export function charField<P extends boolean = false>(argFirst?, argSecond?, argThird?, argFourth?): CharField<P> {
+export function charField<P extends boolean = false>(
+  argFirst?: any,
+  argSecond?: any,
+  argThird?: any,
+  argFourth?: any,
+): CharField<P> {
   let label: string = ''
   let defaultValue: FieldDefault<string, P> = ''
   let nullable: P = false as P
@@ -225,7 +235,12 @@ export function numberField<P extends boolean>(
   nullable: P,
   validators: FormFieldValidator[],
 ): NumberField<P>
-export function numberField<P extends boolean = false>(argFirst?, argSecond?, argThird?, argFourth?): NumberField<P> {
+export function numberField<P extends boolean = false>(
+  argFirst?: any,
+  argSecond?: any,
+  argThird?: any,
+  argFourth?: any,
+): NumberField<P> {
   let label: string = ''
   let defaultValue: FieldDefault<number, P> = 0
   let nullable: P = false as P
@@ -326,10 +341,10 @@ export function dateTimeField<P extends boolean>(
   validators: FormFieldValidator[],
 ): DateTimeField<P>
 export function dateTimeField<P extends boolean = false>(
-  argFirst?,
-  argSecond?,
-  argThird?,
-  argFourth?,
+  argFirst?: any,
+  argSecond?: any,
+  argThird?: any,
+  argFourth?: any,
 ): DateTimeField<P> {
   let label: string = ''
   let defaultValue: FieldDefault<Date, P> = new Date()
@@ -418,7 +433,12 @@ export function dateField<P extends boolean>(
   nullable: P,
   validators: FormFieldValidator[],
 ): DateField<P>
-export function dateField<P extends boolean = false>(argFirst?, argSecond?, argThird?, argFourth?): DateField<P> {
+export function dateField<P extends boolean = false>(
+  argFirst?: any,
+  argSecond?: any,
+  argThird?: any,
+  argFourth?: any,
+): DateField<P> {
   let label: string = ''
   let defaultValue: FieldDefault<Date, P> = new Date()
   let nullable: P = false as P
@@ -593,11 +613,11 @@ export function arrayField<T extends FieldSetRaw | FieldBase<any, any>, P extend
   validators: FormFieldValidator[],
 ): ArrayField<T, P>
 export function arrayField<P extends boolean = false>(
-  argFirst?,
-  argSecond?,
-  argThird?,
-  argFourth?,
-  argFifth?,
+  argFirst?: any,
+  argSecond?: any,
+  argThird?: any,
+  argFourth?: any,
+  argFifth?: any,
 ): ArrayField<any, P> {
   let label: string = ''
   let baseField: FieldSetRaw | FieldBase<any, any>
@@ -741,11 +761,11 @@ export function fieldSet<T extends FieldSetRaw, D extends FieldSetDefault<T, P>,
   validators: FormFieldValidator[],
 ): FieldSet<T, P>
 export function fieldSet<T extends FieldSetRaw, P extends boolean = false>(
-  argFirst,
-  argSecond?,
-  argThird?,
-  argFourth?,
-  argFifth?,
+  argFirst: any,
+  argSecond?: any,
+  argThird?: any,
+  argFourth?: any,
+  argFifth?: any,
 ): FieldSet<any, P> {
   let label: string = ''
   let rawFieldSet: FieldSetRaw

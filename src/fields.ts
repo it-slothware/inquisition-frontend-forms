@@ -26,21 +26,36 @@ type ArrayFieldFromNative<T extends FieldSetRaw | FieldBase<any, any>> =
 export type ErrorList = Array<string>
 export type FlattenedErrors = Record<string, ErrorList>
 
-export type FieldSetErrors<T> = {
+export type oldFieldSetErrors<T> = {
   [key in keyof T]: T[key] extends FieldBase<any, any>
-    ? T[key] extends ArrayField<infer R>
-      ? R extends FieldSet<any>
-        ? ArrayFieldErrors<FieldSetErrors<R>>
+    ? T[key] extends ArrayField<infer R, any>
+      ? R extends FieldSet<infer P, any>
+        ? ArrayFieldErrors<FieldSetErrors<P>>
         : R extends FieldSetRaw
           ? ArrayFieldErrors<FieldSetErrors<R>>
-          : ArrayFieldErrors<FieldErrors>
-      : FieldErrors
+          : ArrayFieldErrors<ErrorList>
+      : ErrorList
     : T[key] extends FieldSetRaw
       ? FieldSetErrors<T[key]>
       : never
 } & { non_field_errors: ErrorList }
 
-export class FieldErrors extends Array<string> {}
+export type FieldSetErrors<T extends FieldSetRaw> = {
+  [key in keyof T]: T[key] extends FieldSetRaw
+    ? FieldSetErrors<T[key]>
+    : T[key] extends ArrayField<infer R, any>
+      ? R extends FieldSetRaw
+        ? ArrayFieldErrors<FieldSetErrors<R>>
+        : R extends FieldSet<infer FS, any>
+          ? ArrayFieldErrors<FieldSetErrors<FS>>
+          : ArrayFieldErrors<ErrorList>
+      : T[key] extends FieldSet<infer FS, any>
+        ? FieldSetErrors<FS>
+        : T[key] extends FieldBase<any, any>
+          ? ErrorList
+          : never
+} & { non_field_errors: ErrorList }
+
 export class ArrayFieldErrors<T> extends Array<T> {
   non_field_errors: ErrorList
 

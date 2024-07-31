@@ -76,11 +76,11 @@ export class BaseWritableApiForm<FS extends FieldSetRaw> extends BaseApiForm<FS>
       } else if (field instanceof ArrayField) {
         const baseField = field.baseField
         if (baseField instanceof FieldSet) {
-          apiErrors[fieldName].forEach((e, i) =>
+          apiErrors[fieldName].forEach((e: any, i: number) =>
             extendErrors(errors, this.flattenApiErrors(baseField, e), `${fieldName}.${i}`),
           )
         } else {
-          apiErrors[fieldName].forEach((e, i) => {
+          apiErrors[fieldName].forEach((e: any, i: number) => {
             errors[`${fieldName}.${i}`] = e
           })
         }

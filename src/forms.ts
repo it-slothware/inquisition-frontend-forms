@@ -61,6 +61,41 @@ type ArrayFieldNames<FS extends FieldSetRaw, D extends number = 15> = ArrayField
   CreateArrayOfLength<D>
 >
 
+type FieldNamesFromArrayField<T extends ArrayField<any, any>, C extends unknown[]> = C extends [...infer CR, any]
+  ? T extends ArrayField<infer R, any>
+    ? R extends FieldSetRaw
+      ? '0' | `0.${FieldNamesFromFieldSetRaw<R, CR> & string}`
+      : R extends FieldBase<any, any>
+        ? R extends FieldSet<infer Q, any>
+          ? `0.${FieldNamesFromFieldSetRaw<Q, CR> & string}`
+          : R extends ArrayField<any, any>
+            ? '0' | `0.${FieldNamesFromArrayField<R, CR> & string}`
+            : '0'
+        : never
+    : never
+  : never
+
+export type FieldNamesFromFieldSetRaw<T extends FieldSetRaw, C extends unknown[]> = {
+  [K in keyof T]: C extends [...infer CR, any]
+    ? T[K] extends FieldSetRaw
+      ? `${K & string}` | `${K & string}.${FieldNamesFromFieldSetRaw<T[K], CR> & string}`
+      : T[K] extends FieldSet<infer R, any>
+        ? `${K & string}` | `${K & string}.${FieldNamesFromFieldSetRaw<R, CR> & string}`
+        : T[K] extends ArrayField<any, any>
+          ? `${K & string}` | `${K & string}.${FieldNamesFromArrayField<T[K], CR> & string}`
+          : T[K] extends FieldBase<any, any>
+            ? `${K & string}`
+            : never
+    : never
+}[keyof T]
+
+export type FieldNames<T extends FormDefinition<any>, D extends number = 15> =
+  T extends FormDefinition<infer R>
+    ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<D>>
+    : T extends FieldSetRaw
+      ? FieldNamesFromFieldSetRaw<T, CreateArrayOfLength<D>>
+      : never
+
 type GetReturnTypeIfFunction<T> = T extends (...args: any[]) => any ? ReturnType<T> : never
 type InferBaseFromArrayField<T extends ArrayField<any, any>> = T extends ArrayField<infer R, any> ? R : never
 

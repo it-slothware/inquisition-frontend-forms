@@ -19,7 +19,7 @@ function isObject(item: any): boolean {
   return item && typeof item === 'object' && !Array.isArray(item)
 }
 
-export function deepMerge<T extends {}>(target: {}, ...sources: {}[]): T {
+export function deepMerge<T extends {}>(target: Record<string, any>, ...sources: Record<string, any>[]): T {
   if (!sources.length) return target as T
   const source = sources.shift()
 

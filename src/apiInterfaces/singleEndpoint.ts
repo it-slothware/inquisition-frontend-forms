@@ -1,13 +1,12 @@
 import { type Ref, ref } from 'vue'
 import { type APIUrl, type CallbackFunction } from './types'
 import { getAxiosInstance, showSuccessNotification, showErrorNotification } from '../configurable'
-import { type FieldSetRaw, type FieldSetData, FieldSet } from '../fields'
+import { type FieldSetRaw, type FieldSetData } from '../fields'
 import { BaseWritableApiFormDefinition, BaseWritableApiForm } from './base'
 import { getURLSearchParamsSize } from './utils'
 
 export class SingleEndpointFormDefinition<FS extends FieldSetRaw> extends BaseWritableApiFormDefinition<FS> {
   readonly url: APIUrl
-  readonly fieldSet: FieldSet<FS>
 
   constructor(url: APIUrl, rawFieldSet: FS) {
     super(url, rawFieldSet)

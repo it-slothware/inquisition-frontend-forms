@@ -48,7 +48,6 @@ export class CrudAPIFormDefinition<
 export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS> {
   readonly definition: CrudAPIFormDefinition<FS, any>
   ref: Ref<FieldSetData<FS>>
-  readonly errors: ComputedRef<FieldSetErrors<FS>>
   readonly isSaved: ComputedRef<boolean>
 
   private readonly postRetrieveCallbacks: CallbackFunction[]

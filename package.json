@@ -1,6 +1,6 @@
 {
   "name": "@tejfel/inquisition-forms",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Inquisition Form Data handler",
   "author": "Simon Sagi <simon.sagi@itslothware.com>",
   "main": "dist/index.js",

@@ -105,6 +105,12 @@ export class FieldBase<DV, P extends boolean = false> {
   }
 }
 
+export class AnyField extends FieldBase<any, true> {
+  constructor(label: string, defaultValue: FieldDefault<any, true>, validators?: FormFieldValidator[]) {
+    super(label, defaultValue, true, validators)
+  }
+}
+
 export class BooleanField<P extends boolean = false> extends FieldBase<boolean, P> {
   constructor(label: string, defaultValue: FieldDefault<boolean, P>, nullable?: P, validators?: FormFieldValidator[]) {
     super(label, defaultValue, nullable, validators)

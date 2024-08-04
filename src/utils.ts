@@ -24,3 +24,12 @@ export function range(startOrEnd: number, end?: number): number[] {
   if (startOrEnd > end) return []
   return [...Array(end - startOrEnd).keys()].map((i) => i + startOrEnd)
 }
+
+import { ref, version } from 'vue'
+
+export function getRef() {
+  return ref
+}
+export function getVersion(): string {
+  return version
+}

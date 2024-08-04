@@ -1,4 +1,4 @@
-import type { FieldSetData } from './fields'
+import { FieldSet, FieldSetData, FieldSetRaw } from './fields'
 import { Form } from './forms'
 import { ModelListDefinition } from './apiInterfaces/list'
 
@@ -14,9 +14,12 @@ export type Add<T extends number, U extends number = 1> = LengthOfArray<
   Concat<CreateArrayOfLength<T>, CreateArrayOfLength<U>>
 >
 
-export type FieldSetDataFrom<T> =
-  T extends Form<infer R>
+export type FieldSetDataFrom<T> = T extends FieldSetRaw
+  ? FieldSetData<T>
+  : T extends FieldSet<infer R, any>
     ? FieldSetData<R>
-    : T extends ModelListDefinition<infer R, any, any, any>
+    : T extends Form<infer R>
       ? FieldSetData<R>
-      : never
+      : T extends ModelListDefinition<infer R, any, any, any>
+        ? FieldSetData<R>
+        : never

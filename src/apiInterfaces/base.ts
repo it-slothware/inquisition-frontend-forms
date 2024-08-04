@@ -1,4 +1,4 @@
-import { type Ref, ref } from 'vue'
+import { computed, ComputedRef, type Ref, ref } from 'vue'
 import type { APIUrl } from './types'
 import { FormDefinition, Form } from '../forms'
 import {
@@ -9,6 +9,7 @@ import {
   ArrayField,
   extendErrors,
   ErrorList,
+  FieldSetErrors,
 } from '../fields'
 
 export class BaseApiFormDefinition<FS extends FieldSetRaw> extends FormDefinition<FS> {
@@ -26,10 +27,14 @@ export class BaseApiFormDefinition<FS extends FieldSetRaw> extends FormDefinitio
 
 export class BaseApiForm<FS extends FieldSetRaw> extends Form<FS> {
   readonly definition: BaseApiFormDefinition<FS>
+  readonly data: Ref<FieldSetData<FS>>
+  readonly errors: ComputedRef<FieldSetErrors<FS>>
 
   constructor(formDefinition: BaseApiFormDefinition<FS>, data: FieldSetData<FS>) {
     super(formDefinition, data)
     this.definition = formDefinition
+    this.data = ref<FieldSetData<FS>>(this.definition.fieldSet.getDefault()) as Ref<FieldSetData<FS>>
+    this.errors = computed(() => this.hydrateErrors())
   }
 
   protected getApiURL(...args: any[]): string {

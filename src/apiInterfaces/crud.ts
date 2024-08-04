@@ -3,7 +3,7 @@ import type { APIUrl, CallbackFunction } from './types'
 import { type FieldSetRaw, type FieldSetData, type IdTypeFromFieldSet, type FieldSetErrors } from '../fields'
 import { getAxiosInstance, showSuccessNotification, showErrorNotification } from '../configurable'
 import { BaseWritableApiFormDefinition, BaseWritableApiForm } from './base'
-import { createULR } from './utils'
+import { createURL } from './utils'
 
 type CrudExtraMethodDefinitions<T extends CrudApiForm<any>> = {
   [key: string]: (this: T, ...args: any[]) => any
@@ -118,7 +118,7 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
       })
   }
 
-  create() {
+  create(): Promise<CrudApiForm<FS>> {
     const api = getAxiosInstance()
     return api
       .post(this.getApiURL(), this.definition.fieldSet.fromNative(this.ref.value))
@@ -135,7 +135,7 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
       })
   }
 
-  update() {
+  update(): Promise<CrudApiForm<FS>> {
     if (!('id' in this.ref.value)) {
       console.warn('Cannot update a model without an ID field')
       return new Promise<CrudApiForm<FS>>((resolve) => {
@@ -160,7 +160,7 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
       })
   }
 
-  delete() {
+  delete(): Promise<CrudApiForm<FS>> {
     if (!('id' in this.ref.value)) {
       console.warn('Cannot delete a model without an ID field')
       return new Promise<CrudApiForm<FS>>((resolve) => {
@@ -185,9 +185,22 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
       })
   }
 
+  save(): Promise<CrudApiForm<FS>> {
+    if (!('id' in this.definition.fieldSet.fieldSetRoot)) {
+      console.warn('Model cannot be without ID field')
+    }
+
+    const isSave = this.data.value.id === null
+    if (isSave) {
+      return this.update()
+    } else {
+      return this.create()
+    }
+  }
+
   protected getApiURL(modelId?: IdTypeFromFieldSet<FS>): string {
     if (typeof this.definition.url === 'function') return this.definition.url({ id: modelId })
-    return createULR(this.definition.url, modelId)
+    return createURL(this.definition.url, modelId)
   }
 }
 

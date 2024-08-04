@@ -1,9 +1,11 @@
-import { singleEndpointFormDefinition } from './apiInterfaces'
+import { crudApiFormDefinition, singleEndpointFormDefinition } from './apiInterfaces'
 import { arrayField, charField, fieldSet, numberField } from './factories'
 import { notBlank } from './validators'
-import { FieldNames } from './forms'
+import { FieldNames, FieldNamesFromFieldSetRaw, FormDefinition } from './forms'
+import { CreateArrayOfLength } from './types'
+import { FieldSetRaw } from './fields'
 
-const testFormDefinition = singleEndpointFormDefinition('/test/', {
+const faszom = {
   id: numberField(42),
   name: charField('foo', [notBlank]),
   images: arrayField(charField([notBlank])),
@@ -24,14 +26,20 @@ const testFormDefinition = singleEndpointFormDefinition('/test/', {
     inner: fieldSet({ photos: arrayField(charField()) }),
     documents: arrayField(charField()),
   },
-})
+}
+
+const testFormDefinition = crudApiFormDefinition('/test/', faszom)
 
 const form = testFormDefinition.new()
-form.errors.value.users[0].pictures[0].url
 
+type kkkadsfk = typeof faszom
+type koo = FieldNamesFromFieldSetRaw<typeof faszom, CreateArrayOfLength<15>>
 type bar = FieldNames<typeof testFormDefinition>
 function foo(name: bar) {
   console.log(name)
 }
+// form.errors.value.users[0].pictures[0].url
 
-foo('')
+foo('id')
+foo('name')
+foo('users.0.pictures.0.url')

@@ -1,5 +1,14 @@
 import { type FieldSetData, type InferredFieldType, type IdTypeFromFieldSet } from './fields'
-import { booleanField, charField, numberField, dateTimeField, dateField, arrayField, fieldSet } from './factories'
+import {
+  anyField,
+  booleanField,
+  charField,
+  numberField,
+  dateTimeField,
+  dateField,
+  arrayField,
+  fieldSet,
+} from './factories'
 import { FormDefinition } from './forms'
 import {
   type ModelListType,
@@ -9,6 +18,7 @@ import {
   modelListDefinition,
   crudApiFormDefinition,
   Paginator,
+  createURL,
 } from './apiInterfaces'
 import {
   notNull,
@@ -33,12 +43,17 @@ import {
   setShowErrorNotification,
 } from './configurable'
 import { FieldSetDataFrom } from './types'
+import { getRef, getVersion } from './utils'
 
 export {
+  getVersion,
+  getRef,
+
   // Fields
   FieldSetData,
   InferredFieldType,
   IdTypeFromFieldSet,
+  anyField,
   booleanField,
   charField,
   numberField,
@@ -58,6 +73,7 @@ export {
   modelListDefinition,
   crudApiFormDefinition,
   Paginator,
+  createURL,
 
   // Validators
   notNull,

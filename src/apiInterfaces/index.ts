@@ -3,6 +3,7 @@ import { SingleEndpointFormDefinition, singleEndpointFormDefinition } from './si
 import { type ModelListType, type FilterOptionsFrom, ModelListDefinition, modelListDefinition } from './list'
 import { CrudAPIFormDefinition, crudApiFormDefinition } from './crud'
 import { Paginator } from './paginator'
+import { createURL } from './utils'
 
 export {
   // Read only
@@ -25,4 +26,7 @@ export {
 
   // Pagination
   Paginator,
+
+  // Utils
+  createURL,
 }

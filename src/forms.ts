@@ -15,6 +15,7 @@ import {
   isFormFieldSet,
 } from './fields'
 import { range } from './utils'
+import { ReadOnlyEndpointFormDefinition, SingleEndpointFormDefinition, CrudAPIFormDefinition } from './apiInterfaces'
 
 type Split<S extends string, D extends string> = string extends S
   ? string[]
@@ -84,17 +85,23 @@ export type FieldNamesFromFieldSetRaw<T extends FieldSetRaw, C extends unknown[]
         : T[K] extends ArrayField<any, any>
           ? `${K & string}` | `${K & string}.${FieldNamesFromArrayField<T[K], CR> & string}`
           : T[K] extends FieldBase<any, any>
-            ? `${K & string}`
+            ? K
             : never
     : never
 }[keyof T]
 
-export type FieldNames<T extends FormDefinition<any>, D extends number = 15> =
-  T extends FormDefinition<infer R>
-    ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<D>>
-    : T extends FieldSetRaw
-      ? FieldNamesFromFieldSetRaw<T, CreateArrayOfLength<D>>
-      : never
+export type FieldNames<T extends FormType> =
+  T extends CrudAPIFormDefinition<infer R>
+    ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
+    : T extends SingleEndpointFormDefinition<infer R>
+      ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
+      : T extends ReadOnlyEndpointFormDefinition<infer R>
+        ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
+        : T extends FormDefinition<infer R>
+          ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
+          : T extends FieldSetRaw
+            ? FieldNamesFromFieldSetRaw<T, CreateArrayOfLength<15>>
+            : never
 
 type GetReturnTypeIfFunction<T> = T extends (...args: any[]) => any ? ReturnType<T> : never
 type InferBaseFromArrayField<T extends ArrayField<any, any>> = T extends ArrayField<infer R, any> ? R : never
@@ -310,3 +317,9 @@ export class Form<FS extends FieldSetRaw> {
     removeTarget.splice(indexes[foundIndexes], 1)
   }
 }
+
+export type FormType =
+  | FormDefinition<any>
+  | ReadOnlyEndpointFormDefinition<any>
+  | SingleEndpointFormDefinition<any>
+  | CrudAPIFormDefinition<any>

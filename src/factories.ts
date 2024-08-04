@@ -2,6 +2,7 @@ import {
   type ConditionalNullable,
   type FieldDefault,
   type ArrayFieldDefault,
+  AnyField,
   BooleanField,
   CharField,
   NumberField,
@@ -11,11 +12,49 @@ import {
   FieldSet,
   FieldSetRaw,
   FieldBase,
-  FieldSetData,
   FieldSetDefault,
 } from './fields'
 import { isFieldLabel, isBoolean, isValidationFunctionArray } from './utils'
 import { type FormFieldValidator } from './validators'
+
+// ------------------------
+//         AnyField
+// ------------------------
+export function anyField(): AnyField
+export function anyField(defaultValue: FieldDefault<any, true>): AnyField
+export function anyField(label: string, defaultValue: FieldDefault<any, true>): AnyField
+export function anyField(defaultValue: FieldDefault<any, true>, validators: FormFieldValidator[]): AnyField
+export function anyField(
+  label: string,
+  defaultValue: FieldDefault<any, true>,
+  validators: FormFieldValidator[],
+): AnyField
+export function anyField(argFirst?: any, argSecond?: any, argThird?: any): AnyField {
+  let label: string = ''
+  let defaultValue: any = null
+  let validators: FormFieldValidator[] = []
+
+  if (isFieldLabel(argFirst) && argSecond !== undefined) {
+    label = argFirst
+    defaultValue = argSecond
+
+    if (isValidationFunctionArray(argThird)) {
+      validators = argThird
+    }
+  } else if (argThird === undefined) {
+    if (argSecond === undefined) {
+      defaultValue = argFirst
+    } else if (isValidationFunctionArray(argSecond)) {
+      defaultValue = argFirst
+      validators = argSecond
+    } else if (isFieldLabel(argFirst)) {
+      label = argFirst
+      defaultValue = argSecond
+    }
+  }
+
+  return new AnyField(label, defaultValue, validators)
+}
 
 // ----------------------------
 //         BooleanField

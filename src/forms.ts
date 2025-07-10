@@ -20,10 +20,10 @@ import { ReadOnlyEndpointFormDefinition, SingleEndpointFormDefinition, CrudAPIFo
 type Split<S extends string, D extends string> = string extends S
   ? string[]
   : S extends ''
-    ? []
-    : S extends `${infer T}${D}${infer U}`
-      ? [T, ...Split<U, D>]
-      : [S]
+  ? []
+  : S extends `${infer T}${D}${infer U}`
+  ? [T, ...Split<U, D>]
+  : [S]
 
 type CountOfSubString<
   T extends string,
@@ -36,12 +36,12 @@ type ArrayFieldNamesFromArrayField<T extends ArrayField<any, any>, C extends unk
     ? R extends FieldSetRaw
       ? `0.${ArrayFieldNamesFromFieldSetRaw<R, CR> & string}`
       : R extends FieldBase<any, any>
-        ? R extends FieldSet<infer Q, any>
-          ? `0.${ArrayFieldNamesFromFieldSetRaw<Q, CR> & string}`
-          : R extends ArrayField<any, any>
-            ? '0' | `0.${ArrayFieldNamesFromArrayField<R, CR> & string}`
-            : never
+      ? R extends FieldSet<infer Q, any>
+        ? `0.${ArrayFieldNamesFromFieldSetRaw<Q, CR> & string}`
+        : R extends ArrayField<any, any>
+        ? '0' | `0.${ArrayFieldNamesFromArrayField<R, CR> & string}`
         : never
+      : never
     : never
   : never
 
@@ -50,10 +50,10 @@ type ArrayFieldNamesFromFieldSetRaw<T extends FieldSetRaw, C extends unknown[]> 
     ? T[K] extends FieldSetRaw
       ? `${K & string}.${ArrayFieldNamesFromFieldSetRaw<T[K], CR>}`
       : T[K] extends FieldSet<infer R, any>
-        ? `${K & string}.${ArrayFieldNamesFromFieldSetRaw<R, CR>}`
-        : T[K] extends ArrayField<any, any>
-          ? `${K & string}` | `${K & string}.${ArrayFieldNamesFromArrayField<T[K], CR>}`
-          : never
+      ? `${K & string}.${ArrayFieldNamesFromFieldSetRaw<R, CR>}`
+      : T[K] extends ArrayField<any, any>
+      ? `${K & string}` | `${K & string}.${ArrayFieldNamesFromArrayField<T[K], CR>}`
+      : never
     : never
 }[keyof T]
 
@@ -67,12 +67,12 @@ type FieldNamesFromArrayField<T extends ArrayField<any, any>, C extends unknown[
     ? R extends FieldSetRaw
       ? '0' | `0.${FieldNamesFromFieldSetRaw<R, CR> & string}`
       : R extends FieldBase<any, any>
-        ? R extends FieldSet<infer Q, any>
-          ? `0.${FieldNamesFromFieldSetRaw<Q, CR> & string}`
-          : R extends ArrayField<any, any>
-            ? '0' | `0.${FieldNamesFromArrayField<R, CR> & string}`
-            : '0'
-        : never
+      ? R extends FieldSet<infer Q, any>
+        ? `0.${FieldNamesFromFieldSetRaw<Q, CR> & string}`
+        : R extends ArrayField<any, any>
+        ? '0' | `0.${FieldNamesFromArrayField<R, CR> & string}`
+        : '0'
+      : never
     : never
   : never
 
@@ -81,27 +81,26 @@ export type FieldNamesFromFieldSetRaw<T extends FieldSetRaw, C extends unknown[]
     ? T[K] extends FieldSetRaw
       ? `${K & string}` | `${K & string}.${FieldNamesFromFieldSetRaw<T[K], CR> & string}`
       : T[K] extends FieldSet<infer R, any>
-        ? `${K & string}` | `${K & string}.${FieldNamesFromFieldSetRaw<R, CR> & string}`
-        : T[K] extends ArrayField<any, any>
-          ? `${K & string}` | `${K & string}.${FieldNamesFromArrayField<T[K], CR> & string}`
-          : T[K] extends FieldBase<any, any>
-            ? K
-            : never
+      ? `${K & string}` | `${K & string}.${FieldNamesFromFieldSetRaw<R, CR> & string}`
+      : T[K] extends ArrayField<any, any>
+      ? `${K & string}` | `${K & string}.${FieldNamesFromArrayField<T[K], CR> & string}`
+      : T[K] extends FieldBase<any, any>
+      ? K
+      : never
     : never
 }[keyof T]
 
-export type FieldNames<T extends FormType> =
-  T extends CrudAPIFormDefinition<infer R>
-    ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
-    : T extends SingleEndpointFormDefinition<infer R>
-      ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
-      : T extends ReadOnlyEndpointFormDefinition<infer R>
-        ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
-        : T extends FormDefinition<infer R>
-          ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
-          : T extends FieldSetRaw
-            ? FieldNamesFromFieldSetRaw<T, CreateArrayOfLength<15>>
-            : never
+export type FieldNames<T extends FormType> = T extends CrudAPIFormDefinition<infer R>
+  ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
+  : T extends SingleEndpointFormDefinition<infer R>
+  ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
+  : T extends ReadOnlyEndpointFormDefinition<infer R>
+  ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
+  : T extends FormDefinition<infer R>
+  ? FieldNamesFromFieldSetRaw<R, CreateArrayOfLength<15>>
+  : T extends FieldSetRaw
+  ? FieldNamesFromFieldSetRaw<T, CreateArrayOfLength<15>>
+  : never
 
 type GetReturnTypeIfFunction<T> = T extends (...args: any[]) => any ? ReturnType<T> : never
 type InferBaseFromArrayField<T extends ArrayField<any, any>> = T extends ArrayField<infer R, any> ? R : never
@@ -111,30 +110,30 @@ type DataTypeFromArrayField<T extends readonly unknown[], K extends ArrayField<a
     ? GetReturnTypeIfFunction<InferBaseFromArrayField<K>['getDefault']>[number]
     : never
   : T extends [any, ...infer B]
-    ? K extends ArrayField<infer R, any>
-      ? R extends FieldBase<any, any>
-        ? R extends ArrayField<any, any>
-          ? DataTypeFromArrayField<[...B], R>
-          : GetReturnTypeIfFunction<R['getDefault']>[number]
-        : R extends FieldSetRaw
-          ? DataTypeFromFormFieldSetRaw<[...B], R>
-          : never
+  ? K extends ArrayField<infer R, any>
+    ? R extends FieldBase<any, any>
+      ? R extends ArrayField<any, any>
+        ? DataTypeFromArrayField<[...B], R>
+        : GetReturnTypeIfFunction<R['getDefault']>[number]
+      : R extends FieldSetRaw
+      ? DataTypeFromFormFieldSetRaw<[...B], R>
       : never
     : never
+  : never
 
 type DataTypeFromFormFieldSetRaw<T extends readonly unknown[], K extends FieldSetRaw> = T['length'] extends 1
   ? T[0] extends keyof K
     ? GetReturnTypeIfFunction<K[T[0]]['getDefault']>[number]
     : never
   : T extends [infer A, ...infer B]
-    ? A extends keyof K & string
-      ? K[A] extends ArrayField<any, any>
-        ? DataTypeFromArrayField<[...B], K[A]>
-        : K[A] extends FieldSetRaw
-          ? DataTypeFromFormFieldSetRaw<[...B], K[A]>
-          : never
+  ? A extends keyof K & string
+    ? K[A] extends ArrayField<any, any>
+      ? DataTypeFromArrayField<[...B], K[A]>
+      : K[A] extends FieldSetRaw
+      ? DataTypeFromFormFieldSetRaw<[...B], K[A]>
       : never
     : never
+  : never
 
 type IndexArray<T, K extends any[] = []> = K['length'] extends T ? K : IndexArray<T, [...K, number]>
 type PushRelatedArguments<T extends string, FS extends FieldSetRaw> = [
@@ -185,6 +184,11 @@ export class Form<FS extends FieldSetRaw> {
       non_field_errors: this.getFlatError([...accessors, 'non_field_errors'].join('.')),
     }
 
+    const fieldSetData = this.getDataByKeys(accessors)
+    if (fieldSetData === null && fieldSet.nullable) {
+      return errors
+    }
+
     for (const [fieldName, field] of Object.entries(fieldSet.fieldSetRoot)) {
       if (field instanceof FieldSet) {
         errors[fieldName] = this.hydrateFieldSetErrors(field, [...accessors, fieldName])
@@ -200,7 +204,7 @@ export class Form<FS extends FieldSetRaw> {
             }
           })
         }
-        arrayErrors.non_field_errors = this.getFlatError([...accessors, fieldName].join('.'))
+        arrayErrors.non_field_errors = this.getFlatError([...accessors, fieldName, 'non_field_errors'].join('.'))
         errors[fieldName] = arrayErrors
       } else {
         errors[fieldName] = this.getFlatError([...accessors, fieldName].join('.'))
@@ -224,6 +228,25 @@ export class Form<FS extends FieldSetRaw> {
 
   protected hasAnyError(): boolean {
     return Object.values(this.validationErrors.value).filter((e) => e.length > 0).length > 0
+  }
+
+  hasFieldErrors(fieldNames: string | string[]): boolean {
+    if (!Array.isArray(fieldNames)) {
+      fieldNames = [fieldNames]
+    }
+
+    return fieldNames
+      .map((fn) => {
+        if (fn.endsWith('*')) {
+          fn = fn.slice(0, -1)
+          return Object.keys(this.validationErrors.value)
+            .filter((k) => k.startsWith(fn))
+            .map((k) => this.getFlatError(k).length > 0)
+            .reduce((a, b) => a || b, false)
+        }
+        return this.getFlatError(fn).length > 0
+      })
+      .reduce((a, b) => a || b, false)
   }
 
   resetErrors() {
@@ -269,11 +292,11 @@ export class Form<FS extends FieldSetRaw> {
   ): DataTypeFromFormFieldSetRaw<Split<T, '.'>, FS> {
     const expectedIndexCount = (relatedName.match(/\.0/g) || []).length
 
-    let data
+    let data: DataTypeFromFormFieldSetRaw<Split<T, '.'>, FS>
     if (expectedIndexCount < args.length) {
       data = args.at(-1) as DataTypeFromFormFieldSetRaw<Split<T, '.'>, FS>
     } else {
-      data = this.getRelated(relatedName)
+      data = this.getRelated(relatedName) as DataTypeFromFormFieldSetRaw<Split<T, '.'>, FS>
     }
 
     let foundIndexes = 0
@@ -316,6 +339,10 @@ export class Form<FS extends FieldSetRaw> {
 
     removeTarget.splice(indexes[foundIndexes], 1)
   }
+}
+
+export function formDefinition<FS extends FieldSetRaw>(rawFieldSet: FS) {
+  return new FormDefinition(rawFieldSet)
 }
 
 export type FormType =

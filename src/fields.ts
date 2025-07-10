@@ -13,47 +13,35 @@ export type FieldSetData<T> = {
   [key in keyof T]: T[key] extends FieldBase<any, any>
     ? ReturnType<T[key]['getDefault']>
     : T[key] extends FieldSetRaw
-      ? FieldSetData<T[key]>
-      : never
+    ? FieldSetData<T[key]>
+    : never
 }
 
-export type ArrayFieldDefault<T extends FieldSetRaw | FieldBase<any, any>> =
-  T extends FieldBase<any, any> ? ReturnType<T['getDefault']> : FieldSetData<T>
+export type ArrayFieldDefault<T extends FieldSetRaw | FieldBase<any, any>> = T extends FieldBase<any, any>
+  ? ReturnType<T['getDefault']>
+  : FieldSetData<T>
 
-type ArrayFieldFromNative<T extends FieldSetRaw | FieldBase<any, any>> =
-  T extends FieldBase<any, any> ? ReturnType<T['fromNative']> : FieldSetData<T>
+type ArrayFieldFromNative<T extends FieldSetRaw | FieldBase<any, any>> = T extends FieldBase<any, any>
+  ? ReturnType<T['fromNative']>
+  : FieldSetData<T>
 
 export type ErrorList = Array<string>
 export type FlattenedErrors = Record<string, ErrorList>
-
-export type oldFieldSetErrors<T> = {
-  [key in keyof T]: T[key] extends FieldBase<any, any>
-    ? T[key] extends ArrayField<infer R, any>
-      ? R extends FieldSet<infer P, any>
-        ? ArrayFieldErrors<FieldSetErrors<P>>
-        : R extends FieldSetRaw
-          ? ArrayFieldErrors<FieldSetErrors<R>>
-          : ArrayFieldErrors<ErrorList>
-      : ErrorList
-    : T[key] extends FieldSetRaw
-      ? FieldSetErrors<T[key]>
-      : never
-} & { non_field_errors: ErrorList }
 
 export type FieldSetErrors<T extends FieldSetRaw> = {
   [key in keyof T]: T[key] extends FieldSetRaw
     ? FieldSetErrors<T[key]>
     : T[key] extends ArrayField<infer R, any>
-      ? R extends FieldSetRaw
-        ? ArrayFieldErrors<FieldSetErrors<R>>
-        : R extends FieldSet<infer FS, any>
-          ? ArrayFieldErrors<FieldSetErrors<FS>>
-          : ArrayFieldErrors<ErrorList>
-      : T[key] extends FieldSet<infer FS, any>
-        ? FieldSetErrors<FS>
-        : T[key] extends FieldBase<any, any>
-          ? ErrorList
-          : never
+    ? R extends FieldSetRaw
+      ? ArrayFieldErrors<FieldSetErrors<R>>
+      : R extends FieldSet<infer FS, any>
+      ? ArrayFieldErrors<FieldSetErrors<FS>>
+      : ArrayFieldErrors<ErrorList>
+    : T[key] extends FieldSet<infer FS, any>
+    ? FieldSetErrors<FS>
+    : T[key] extends FieldBase<any, any>
+    ? ErrorList
+    : never
 } & { non_field_errors: ErrorList }
 
 export class ArrayFieldErrors<T> extends Array<T> {
@@ -198,7 +186,7 @@ export class DateTimeField<P extends boolean = false> extends FieldBase<Date, P>
 
   fromNative(value: ConditionalNullable<Date, P>): ConditionalNullable<string, P> {
     if (value === null) return value as null as ConditionalNullable<string, P>
-    return value.toISOString()
+    return new Date(value).toISOString()
   }
 }
 
@@ -221,7 +209,34 @@ export class DateField<P extends boolean = false> extends FieldBase<Date, P> {
 
   fromNative(value: ConditionalNullable<Date, P>): ConditionalNullable<string, P> {
     if (value === null) return value as null as ConditionalNullable<string, P>
-    return value.toISOString().split('T', 1)[0]
+    const dateForSure = new Date(value)
+    const year = dateForSure.getFullYear()
+    const month = (dateForSure.getMonth() + 1).toString().padStart(2, '0')
+    const day = dateForSure.getDate().toString().padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+}
+
+export class TimeField<P extends boolean = false> extends FieldBase<string, P> {
+  constructor(label: string, defaultValue: FieldDefault<string, P>, nullable?: P, validators?: FormFieldValidator[]) {
+    super(label, defaultValue, nullable, validators)
+  }
+
+  toNative(rawValue: any): ConditionalNullable<string, P> {
+    if (this.nullable && rawValue === null) return null as ConditionalNullable<string, P>
+
+    if (typeof rawValue === 'string' && isNaN(Number(rawValue))) {
+      const convertedTime = new Date(`1970-01-01T${rawValue}Z`)
+      if (!isNaN(convertedTime.getTime())) return rawValue
+    }
+
+    console.warn(`Invalid data type: cannot convert ${typeof rawValue} to Date`)
+    return '00:00:00'
+  }
+
+  fromNative(value: ConditionalNullable<string, P>): ConditionalNullable<string, P> {
+    if (value === null) return value as null as ConditionalNullable<string, P>
+    return value
   }
 }
 
@@ -331,6 +346,30 @@ export class FieldSet<FS extends FieldSetRaw, P extends boolean = false> extends
     }
 
     this.fieldSetRoot = normalizedFieldSetRaw as FormFieldSetRoot<FS>
+  }
+
+  toNative(rawValue: any): ConditionalNullable<FieldSetData<FS>, P> {
+    if (this.nullable && rawValue === null) return null as ConditionalNullable<FieldSetData<FS>, P>
+
+    const nativeData: Record<string, any> = {}
+    for (const [fieldName, field] of Object.entries(this.fieldSetRoot)) {
+      if (fieldName in rawValue) {
+        nativeData[fieldName] = field.toNative(rawValue[fieldName])
+      } else {
+        nativeData[fieldName] = field.getDefault()
+      }
+    }
+    return nativeData as ConditionalNullable<FieldSetData<FS>, P>
+  }
+
+  fromNative(value: ConditionalNullable<FieldSetData<FS>, P>): any {
+    if (value === null) return null
+
+    const rawValue: Record<string, any> = {}
+    for (const [fieldName, field] of Object.entries(this.fieldSetRoot)) {
+      rawValue[fieldName] = field.fromNative(value[fieldName])
+    }
+    return rawValue
   }
 
   validateFieldSet(data: FieldSetData<FS>): FlattenedErrors {

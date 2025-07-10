@@ -11,10 +11,10 @@ export class Paginator {
   maxPage: ComputedRef<number>
   #onChangeCallbackFunctions: PaginatorChangeCallbackFunction[]
 
-  constructor(pageSize: number = DEFAULT_PAGE_SIZE) {
+  constructor(currentPage: number, pageSize: number = DEFAULT_PAGE_SIZE) {
     this.total = ref(0)
     this.pageSize = ref(pageSize)
-    this.currentPage = ref(1)
+    this.currentPage = ref(currentPage)
     this.maxPage = computed(this.#maxPage)
     this.#onChangeCallbackFunctions = []
   }
@@ -53,6 +53,6 @@ export class Paginator {
   }
 
   #callOnChangeCallbacks(): void {
-    this.#onChangeCallbackFunctions.forEach(f => f(this))
+    this.#onChangeCallbackFunctions.forEach((f) => f(this))
   }
 }

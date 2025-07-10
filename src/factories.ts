@@ -8,6 +8,7 @@ import {
   NumberField,
   DateTimeField,
   DateField,
+  TimeField,
   ArrayField,
   FieldSet,
   FieldSetRaw,
@@ -439,6 +440,10 @@ export function dateTimeField<P extends boolean = false>(
   return new DateTimeField(label, defaultValue, nullable, validators)
 }
 
+// -------------------------
+//         DateField
+// -------------------------
+
 export function dateField(): DateField
 export function dateField(label: string): DateField
 export function dateField(defaultValue: FieldDefault<Date, false>): DateField
@@ -530,6 +535,110 @@ export function dateField<P extends boolean = false>(
   }
 
   return new DateField(label, defaultValue, nullable, validators)
+}
+
+// -------------------------
+//         TimeField
+// -------------------------
+
+const timeRegex = new RegExp('[0-9]{2}:[0-9]{2}:[0-9]{2}')
+
+function isDefaultTimeValue<P extends boolean>(value: any): value is FieldDefault<string, P> {
+  if (value === null || typeof value === 'function') return true
+  return typeof value === 'string' && timeRegex.test(value)
+}
+
+export function timeField(): TimeField
+export function timeField(label: string): TimeField
+export function timeField(defaultValue: FieldDefault<string, false>): TimeField
+export function timeField<P extends boolean>(nullable: P): TimeField<P>
+export function timeField(validators: FormFieldValidator[]): TimeField
+export function timeField(label: string, defaultValue: FieldDefault<string, false>): TimeField
+export function timeField<P extends boolean>(defaultValue: FieldDefault<string, P>, nullable: P): TimeField<P>
+export function timeField<P extends boolean>(label: string, nullable: P): TimeField<P>
+export function timeField(label: string, validators: FormFieldValidator[]): TimeField
+export function timeField(defaultValue: FieldDefault<string, false>, validators: FormFieldValidator[]): TimeField
+export function timeField<P extends boolean>(nullable: P, validators: FormFieldValidator[]): TimeField<P>
+export function timeField<P extends boolean>(
+  label: string,
+  defaultValue: FieldDefault<string, P>,
+  nullable: P,
+): TimeField<P>
+export function timeField(
+  label: string,
+  defaultValue: FieldDefault<string, false>,
+  validators: FormFieldValidator[],
+): TimeField
+export function timeField<P extends boolean>(
+  defaultValue: FieldDefault<string, P>,
+  nullable: P,
+  validators: FormFieldValidator[],
+): TimeField<P>
+export function timeField<P extends boolean>(label: string, nullable: P, validators: FormFieldValidator[]): TimeField<P>
+export function timeField<P extends boolean>(
+  label: string,
+  defaultValue: FieldDefault<string, P>,
+  nullable: P,
+  validators: FormFieldValidator[],
+): TimeField<P>
+export function timeField<P extends boolean = false>(
+  argFirst?: any,
+  argSecond?: any,
+  argThird?: any,
+  argFourth?: any,
+): TimeField<P> {
+  let label: string = ''
+  let defaultValue: FieldDefault<string, P> = '00:00:00'
+  let nullable: P = false as P
+  let validators: FormFieldValidator[] = []
+
+  if (isFieldLabel(argFirst)) {
+    label = argFirst
+
+    if (isDefaultTimeValue<P>(argSecond)) {
+      defaultValue = argSecond
+
+      if (isBoolean(argThird)) {
+        nullable = argThird as P
+
+        if (isValidationFunctionArray(argFourth)) {
+          validators = argFourth
+        }
+      } else if (isValidationFunctionArray(argThird)) {
+        validators = argThird
+      }
+    } else if (isBoolean(argSecond)) {
+      nullable = argSecond as P
+
+      if (isValidationFunctionArray(argThird)) {
+        validators = argThird
+      }
+    } else if (isValidationFunctionArray(argSecond)) {
+      validators = argSecond
+    }
+  } else if (isDefaultTimeValue<P>(argFirst)) {
+    defaultValue = argFirst
+
+    if (isBoolean(argSecond)) {
+      nullable = argSecond as P
+
+      if (isValidationFunctionArray(argThird)) {
+        validators = argThird
+      }
+    } else if (isValidationFunctionArray(argSecond)) {
+      validators = argSecond
+    }
+  } else if (isBoolean(argFirst)) {
+    nullable = argFirst as P
+
+    if (isValidationFunctionArray(argSecond)) {
+      validators = argSecond
+    }
+  } else if (isValidationFunctionArray(argFirst)) {
+    validators = argFirst
+  }
+
+  return new TimeField(label, defaultValue, nullable, validators)
 }
 
 export function arrayField<T extends FieldSetRaw | FieldBase<any, any>>(baseField: T): ArrayField<T>

@@ -14,26 +14,26 @@ export function getAxiosInstance(): AxiosInstance {
 // Notifications
 type NotificationFunction = (message: string) => void
 
-export let showSuccessNotification: NotificationFunction = function (message: string) {}
-export let showWarningNotification: NotificationFunction = function (message: string) {}
-export let showErrorNotification: NotificationFunction = function (message: string) {}
+export let showSuccessNotificationToast: NotificationFunction = function (message: string) {}
+export let showWarningNotificationToast: NotificationFunction = function (message: string) {}
+export let showErrorNotificationToast: NotificationFunction = function (message: string) {}
 
-export function setShowSuccessNotification(func: NotificationFunction) {
-  showSuccessNotification = func
+export function setShowSuccessNotificationToast(func: NotificationFunction) {
+  showSuccessNotificationToast = func
 }
 
-export function setShowWarningNotification(func: NotificationFunction) {
-  showSuccessNotification = func
+export function setShowWarningNotificationToast(func: NotificationFunction) {
+  showWarningNotificationToast = func
 }
 
-export function setShowErrorNotification(func: NotificationFunction) {
-  showSuccessNotification = func
+export function setShowErrorNotificationToast(func: NotificationFunction) {
+  showErrorNotificationToast = func
 }
 
 export function getNotificationFunctions() {
   return {
-    showSuccessNotification,
-    showWarningNotification,
-    showErrorNotification,
+    showSuccessNotificationToast,
+    showWarningNotificationToast,
+    showErrorNotificationToast,
   }
 }

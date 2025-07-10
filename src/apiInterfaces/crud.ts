@@ -1,9 +1,10 @@
-import { computed, ComputedRef, type Ref, ref } from 'vue'
+import { computed, ComputedRef } from 'vue'
 import type { APIUrl, CallbackFunction } from './types'
-import { type FieldSetRaw, type FieldSetData, type IdTypeFromFieldSet, type FieldSetErrors } from '../fields'
-import { getAxiosInstance, showSuccessNotification, showErrorNotification } from '../configurable'
-import { BaseWritableApiFormDefinition, BaseWritableApiForm } from './base'
-import { createURL } from './utils'
+import { type FieldSetRaw, type FieldSetData, type IdTypeFromFieldSet, FieldBase } from '../fields'
+import { getAxiosInstance, showSuccessNotificationToast, showErrorNotificationToast } from '../configurable'
+import { BaseWritableApiFormDefinition, BaseWritableApiForm, QueryParams } from './base'
+import { createURL, getURLSearchParamsSize } from './utils'
+import { DelegatedPromise } from '@/utils/promises'
 
 type CrudExtraMethodDefinitions<T extends CrudApiForm<any>> = {
   [key: string]: (this: T, ...args: any[]) => any
@@ -16,7 +17,8 @@ type CrudExtraMethods<LT extends CrudApiForm<any>, EMD extends CrudExtraMethodDe
 export class CrudAPIFormDefinition<
   FS extends FieldSetRaw,
   EMD extends CrudExtraMethodDefinitions<CrudApiForm<FS>> = {},
-> extends BaseWritableApiFormDefinition<FS> {
+  QPFS extends FieldSetRaw = Record<string, FieldBase<any>>,
+> extends BaseWritableApiFormDefinition<FS, QPFS> {
   readonly url: APIUrl
   readonly extraMethods: EMD
 
@@ -28,9 +30,10 @@ export class CrudAPIFormDefinition<
     this.extraMethods = extraMethods
   }
 
-  new(initialData?: Partial<FieldSetData<FS>>): CrudApiForm<FS> & CrudExtraMethods<CrudApiForm<FS>, EMD> {
-    return new CrudApiForm<FS>(this, this.fieldSet.toNative(initialData)) as CrudApiForm<FS> &
-      CrudExtraMethods<CrudApiForm<FS>, EMD>
+  new(initialData?: Partial<FieldSetData<FS>>): CrudApiForm<FS, QPFS> & CrudExtraMethods<CrudApiForm<FS, QPFS>, EMD> {
+    if (!initialData) initialData = {}
+    return new CrudApiForm<FS, QPFS>(this, this.fieldSet.toNative(initialData)) as CrudApiForm<FS, QPFS> &
+      CrudExtraMethods<CrudApiForm<FS, QPFS>, EMD>
   }
 
   fetch(modelId: IdTypeFromFieldSet<FS>): CrudApiForm<FS> & CrudExtraMethods<CrudApiForm<FS>, EMD> {
@@ -40,25 +43,28 @@ export class CrudAPIFormDefinition<
   }
 
   fetchOrNew(modelId?: IdTypeFromFieldSet<FS>): CrudApiForm<FS> & CrudExtraMethods<CrudApiForm<FS>, EMD> {
-    if (!!modelId) return this.fetch(modelId)
+    if (modelId) return this.fetch(modelId)
     return this.new()
   }
 }
 
-export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS> {
-  readonly definition: CrudAPIFormDefinition<FS, any>
-  ref: Ref<FieldSetData<FS>>
+export class CrudApiForm<
+  FS extends FieldSetRaw,
+  QPFS extends FieldSetRaw = Record<string, FieldBase<any>>,
+> extends BaseWritableApiForm<FS, QPFS> {
+  readonly definition: CrudAPIFormDefinition<FS, any, QPFS>
   readonly isSaved: ComputedRef<boolean>
 
   private readonly postRetrieveCallbacks: CallbackFunction[]
+  private readonly postSaveCallbacks: CallbackFunction[]
   private readonly postCreateCallbacks: CallbackFunction[]
   private readonly postUpdateCallbacks: CallbackFunction[]
   private readonly postDeleteCallbacks: CallbackFunction[]
 
-  constructor(formDefinition: CrudAPIFormDefinition<FS, any>, data: FieldSetData<FS>) {
+  constructor(formDefinition: CrudAPIFormDefinition<FS, any, QPFS>, data: FieldSetData<FS>) {
     super(formDefinition, data)
     this.definition = formDefinition
-    this.ref = ref(data) as Ref<FieldSetData<FS>>
+    this.data.value = data
 
     const temp: Record<string, () => void> = {}
     for (const methodName in this.definition.extraMethods) {
@@ -69,17 +75,22 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
     Object.assign(this, temp)
 
     this.postRetrieveCallbacks = []
+    this.postSaveCallbacks = []
     this.postCreateCallbacks = []
     this.postUpdateCallbacks = []
     this.postDeleteCallbacks = []
 
     this.isSaved = computed(() => {
-      return 'id' in this.data.value && this.data.value !== null
+      return 'id' in this.data.value && !!this.data.value.id
     })
   }
 
   postRetrieve(func: CallbackFunction) {
     this.postRetrieveCallbacks.push(func)
+  }
+
+  postSave(func: CallbackFunction) {
+    this.postSaveCallbacks.push(func)
   }
 
   postCreate(func: CallbackFunction) {
@@ -94,113 +105,160 @@ export class CrudApiForm<FS extends FieldSetRaw> extends BaseWritableApiForm<FS>
     this.postDeleteCallbacks.push(func)
   }
 
-  retrieve(): Promise<CrudApiForm<FS>> {
-    if (!('id' in this.ref.value)) {
+  retrieve(queryParams?: Partial<QueryParams<QPFS>>): Promise<CrudApiForm<FS>> {
+    if (!('id' in this.data.value)) {
       console.warn('Cannot retrieve a model without an ID field')
       return new Promise<CrudApiForm<FS>>((resolve) => {
         resolve(this)
       })
     }
-    const modelId: IdTypeFromFieldSet<FS> = this.ref.value.id as IdTypeFromFieldSet<FS>
+    const modelId: IdTypeFromFieldSet<FS> = this.data.value.id as IdTypeFromFieldSet<FS>
+
+    if (queryParams) {
+      this.setQueryParams(queryParams)
+    }
 
     const api = getAxiosInstance()
     return api
-      .get(this.getApiURL(modelId))
+      .get(this.getApiURL([modelId]))
       .then((response) => {
-        this.ref.value = this.definition.fieldSet.toNative(response.data)
+        this.data.value = this.definition.fieldSet.toNative(response.data)
         this.postRetrieveCallbacks.forEach((func) => func(true))
         return this
       })
       .catch(() => {
-        showErrorNotification('Hiba a betöltés közben')
+        showErrorNotificationToast('Hiba a betöltés közben')
         this.postRetrieveCallbacks.forEach((func) => func(false))
         return this
       })
   }
 
   create(): Promise<CrudApiForm<FS>> {
+    this.validate()
+    if (this.hasAnyError()) {
+      return new Promise((resolve) => {
+        resolve(this)
+      })
+    }
+
     const api = getAxiosInstance()
     return api
-      .post(this.getApiURL(), this.definition.fieldSet.fromNative(this.ref.value))
+      .post(this.getApiURL(), this.definition.fieldSet.fromNative(this.data.value))
       .then((response) => {
-        this.ref.value = this.definition.fieldSet.toNative(response.data)
-        showSuccessNotification('Sikeres mentés')
+        showSuccessNotificationToast('Sikeres mentés')
+        this.resetErrors()
+        this.data.value = this.definition.fieldSet.toNative(response.data)
+        this.postSaveCallbacks.forEach((func) => func(true))
         this.postCreateCallbacks.forEach((func) => func(true))
         return this
       })
-      .catch(() => {
-        showErrorNotification('Hiba a mentés közben')
+      .catch((error) => {
+        showErrorNotificationToast('Hiba a mentés közben')
+        this.apiErrors.value = this.flattenApiErrors(this.definition.fieldSet, error.response.data)
+        this.postSaveCallbacks.forEach((func) => func(false))
         this.postCreateCallbacks.forEach((func) => func(false))
         return this
       })
   }
 
   update(): Promise<CrudApiForm<FS>> {
-    if (!('id' in this.ref.value)) {
+    this.validate()
+    if (this.hasAnyError()) {
+      return new Promise((resolve) => {
+        resolve(this)
+      })
+    }
+
+    if (!('id' in this.data.value)) {
       console.warn('Cannot update a model without an ID field')
       return new Promise<CrudApiForm<FS>>((resolve) => {
         resolve(this)
       })
     }
-    const modelId: IdTypeFromFieldSet<FS> = this.ref.value.id as IdTypeFromFieldSet<FS>
+    const modelId: IdTypeFromFieldSet<FS> = this.data.value.id as IdTypeFromFieldSet<FS>
 
     const api = getAxiosInstance()
     return api
-      .put(this.getApiURL(modelId), this.definition.fieldSet.fromNative(this.ref.value))
+      .put(this.getApiURL([modelId]), this.definition.fieldSet.fromNative(this.data.value))
       .then((response) => {
-        this.ref.value = this.definition.fieldSet.toNative(response.data)
-        showSuccessNotification('Sikeres mentés')
+        showSuccessNotificationToast('Sikeres mentés')
+        this.resetErrors()
+        this.data.value = this.definition.fieldSet.toNative(response.data)
+        this.postSaveCallbacks.forEach((func) => func(true))
         this.postUpdateCallbacks.forEach((func) => func(true))
         return this
       })
-      .catch(() => {
-        showErrorNotification('Hiba a mentés közben')
+      .catch((error) => {
+        showErrorNotificationToast('Hiba a mentés közben')
+        this.apiErrors.value = this.flattenApiErrors(this.definition.fieldSet, error.response.data)
+        this.postSaveCallbacks.forEach((func) => func(false))
         this.postUpdateCallbacks.forEach((func) => func(false))
         return this
       })
   }
 
-  delete(): Promise<CrudApiForm<FS>> {
-    if (!('id' in this.ref.value)) {
+  delete(cleanUpPromise?: DelegatedPromise): Promise<CrudApiForm<FS>> {
+    if (!('id' in this.data.value)) {
       console.warn('Cannot delete a model without an ID field')
       return new Promise<CrudApiForm<FS>>((resolve) => {
         resolve(this)
       })
     }
 
-    const modelId: IdTypeFromFieldSet<FS> = this.ref.value.id as IdTypeFromFieldSet<FS>
+    const modelId: IdTypeFromFieldSet<FS> = this.data.value.id as IdTypeFromFieldSet<FS>
 
     const api = getAxiosInstance()
     return api
-      .delete(this.getApiURL(modelId))
+      .delete(this.getApiURL([modelId]))
       .then(() => {
-        showSuccessNotification('Sikeres törlés')
+        showSuccessNotificationToast('Sikeres törlés')
+        this.resetErrors()
         this.postDeleteCallbacks.forEach((func) => func(true))
         return this
       })
       .catch(() => {
-        showErrorNotification('Hiba a törlés közben')
+        showErrorNotificationToast('Hiba a törlés közben')
         this.postDeleteCallbacks.forEach((func) => func(false))
         return this
       })
+      .finally(() => {
+        if (cleanUpPromise) {
+          cleanUpPromise.resolve()
+        }
+      })
   }
 
-  save(): Promise<CrudApiForm<FS>> {
+  save(cleanUpPromise?: DelegatedPromise): Promise<CrudApiForm<FS>> {
     if (!('id' in this.definition.fieldSet.fieldSetRoot)) {
       console.warn('Model cannot be without ID field')
     }
 
     const isSave = this.data.value.id === null
+    let promise: Promise<CrudApiForm<FS>>
     if (isSave) {
-      return this.update()
+      promise = this.create()
     } else {
-      return this.create()
+      promise = this.update()
     }
+    return promise.finally(() => {
+      if (cleanUpPromise) {
+        cleanUpPromise.resolve()
+      }
+    })
   }
 
-  protected getApiURL(modelId?: IdTypeFromFieldSet<FS>): string {
-    if (typeof this.definition.url === 'function') return this.definition.url({ id: modelId })
-    return createURL(this.definition.url, modelId)
+  protected getApiURL(params?: any[]): string {
+    if (!params) params = []
+
+    let url =
+      typeof this.definition.url === 'function'
+        ? this.definition.url(params)
+        : createURL(this.definition.url, params[0])
+    const queryParams = this.getQueryParamsString()
+    if (getURLSearchParamsSize(queryParams) > 0) {
+      url += `?${queryParams.toString()}`
+    }
+    return url
   }
 }
 

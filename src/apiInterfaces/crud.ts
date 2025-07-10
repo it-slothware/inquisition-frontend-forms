@@ -4,7 +4,7 @@ import { type FieldSetRaw, type FieldSetData, type IdTypeFromFieldSet, FieldBase
 import { getAxiosInstance, showSuccessNotificationToast, showErrorNotificationToast } from '../configurable'
 import { BaseWritableApiFormDefinition, BaseWritableApiForm, QueryParams } from './base'
 import { createURL, getURLSearchParamsSize } from './utils'
-import { DelegatedPromise } from '@/utils/promises'
+import { DelegatedPromise } from '../promises'
 
 type CrudExtraMethodDefinitions<T extends CrudApiForm<any>> = {
   [key: string]: (this: T, ...args: any[]) => any

@@ -12,8 +12,8 @@ import {
   FieldSetErrors,
   FieldBase,
 } from '../fields'
-import { getURLSearchParamsSize } from '@/inquisition-forms'
-import { isStringArray } from '@/inquisition-forms/utils'
+import { getURLSearchParamsSize } from '..'
+import { isStringArray } from '../utils'
 
 export type QueryParams<T extends FieldSetRaw> = {
   [key in keyof T]: QueryParamsValueType<T, key>

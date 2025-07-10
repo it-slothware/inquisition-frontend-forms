@@ -58,7 +58,7 @@ describe('Model list', () => {
     const modelList = testModelListDefinition.new()
     expect(modelList.entities.value).toStrictEqual([])
     expect(modelList.searchText.value).toBe('')
-    expect(modelList.filterOptions.value).toStrictEqual({})
+    expect(modelList.filterOptions.value).toStrictEqual({ age: 0, name: '' })
   })
 
   test('Fetch list', async () => {
@@ -66,7 +66,7 @@ describe('Model list', () => {
     await new Promise((resolve) => resolve({}))
     expect(modelList.entities.value).toStrictEqual([])
     expect(modelList.searchText.value).toBe('')
-    expect(modelList.filterOptions.value).toStrictEqual({})
+    expect(modelList.filterOptions.value).toStrictEqual({ age: 0, name: '' })
   })
 
   test('Search string', async () => {
@@ -85,19 +85,16 @@ describe('Model list', () => {
   test('Filtering', async () => {
     const modelList = testModelListDefinition.new()
     modelList.setFilterOption('name', 'foo')
-    await modelList.fetch()
     expect(mockedAxios.get.mock.calls).toHaveLength(1)
     expect(mockedAxios.get.mock.calls[0][0]).toBe('/test/?name=foo')
 
     modelList.setFilterOption('age', 42)
-    await modelList.fetch()
     expect(mockedAxios.get.mock.calls).toHaveLength(2)
     expect(mockedAxios.get.mock.calls[1][0]).toBe('/test/?name=foo&age=42')
 
     modelList.setFilterOption('name', null)
     modelList.setFilterOption('age', null)
-    await modelList.fetch()
-    expect(mockedAxios.get.mock.calls).toHaveLength(3)
+    expect(mockedAxios.get.mock.calls).toHaveLength(4)
     expect(mockedAxios.get.mock.calls[2][0]).toBe('/test/')
   })
 
@@ -106,8 +103,7 @@ describe('Model list', () => {
     modelList.setFilterOption('name', 'foo')
     modelList.setFilterOption('age', 42)
     modelList.setSearchText('bar')
-    await modelList.fetch()
-    expect(mockedAxios.get.mock.calls).toHaveLength(1)
+    expect(mockedAxios.get.mock.calls).toHaveLength(3)
     expect(mockedAxios.get.mock.calls[0][0]).toBe('/test/?q=bar&name=foo&age=42')
   })
 
@@ -141,7 +137,7 @@ describe('Paginated model list', () => {
     const modelList = testPaginatedModelListDefinition.new()
     expect(modelList.entities.value).toStrictEqual([])
     expect(modelList.searchText.value).toBe('')
-    expect(modelList.filterOptions.value).toStrictEqual({})
+    expect(modelList.filterOptions.value).toStrictEqual({ age: 0, name: '' })
     expect(modelList.paginator.total.value).toBe(0)
     expect(modelList.paginator.pageSize.value).toBe(25)
     expect(modelList.paginator.currentPage.value).toBe(1)
@@ -170,7 +166,7 @@ describe('Paginated model list', () => {
       { id: 0, name: 'foo' },
     ])
     expect(modelList.searchText.value).toBe('')
-    expect(modelList.filterOptions.value).toStrictEqual({})
+    expect(modelList.filterOptions.value).toStrictEqual({ age: 0, name: '' })
     expect(modelList.paginator.total.value).toBe(4)
     expect(modelList.paginator.pageSize.value).toBe(25)
     expect(modelList.paginator.currentPage.value).toBe(1)

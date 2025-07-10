@@ -1,6 +1,6 @@
 import { ConditionalNullable, FieldSet, FieldSetData, FieldSetRaw } from './fields'
 import { Form, FormDefinition } from './forms'
-import { ModelListDefinition } from './apiInterfaces/list'
+import { ModelListDefinition } from './apiInterfaces'
 
 type LengthOfArray<T extends readonly unknown[]> = T['length']
 
@@ -17,11 +17,11 @@ export type Add<T extends number, U extends number = 1> = LengthOfArray<
 export type FieldSetDataFrom<T> = T extends FieldSetRaw
   ? FieldSetData<T>
   : T extends FieldSet<infer R, infer P>
-  ? ConditionalNullable<FieldSetData<R>, P>
-  : T extends FormDefinition<infer R>
-  ? FieldSetData<R>
-  : T extends Form<infer R>
-  ? FieldSetData<R>
-  : T extends ModelListDefinition<infer R, any, any, any>
-  ? FieldSetData<R>
-  : never
+    ? ConditionalNullable<FieldSetData<R>, P>
+    : T extends FormDefinition<infer R>
+      ? FieldSetData<R>
+      : T extends Form<infer R>
+        ? FieldSetData<R>
+        : T extends ModelListDefinition<infer R, any, any, any>
+          ? FieldSetData<R>
+          : never

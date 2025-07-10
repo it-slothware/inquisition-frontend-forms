@@ -1,4 +1,4 @@
-import { FormDefinition, booleanField, charField, numberField, dateTimeField, arrayField } from '../src'
+import { formDefinition, booleanField, charField, numberField, dateTimeField, arrayField } from '../src'
 
 describe('Form tester', () => {
   beforeEach(() => {
@@ -10,7 +10,7 @@ describe('Form tester', () => {
   })
 
   test('Default data layout', () => {
-    const formDefinition = new FormDefinition({
+    const definedForm = formDefinition({
       id: numberField(),
       nullableNumber: numberField(null, true),
       meaningOfLife: numberField(42),
@@ -27,7 +27,7 @@ describe('Form tester', () => {
       listOfObjectWithNulls: arrayField({ id: numberField(null, true) }, 2),
     })
 
-    const form = formDefinition.new()
+    const form = definedForm.new()
     expect(form.data.value).toStrictEqual({
       id: 0,
       meaningOfLife: 42,
@@ -49,13 +49,13 @@ describe('Form tester', () => {
 
 describe('Form push related', () => {
   describe('Array of values', () => {
-    const formDefinition = new FormDefinition({
+    const definedForm = formDefinition({
       outer: arrayField(numberField()),
     })
-    let form: ReturnType<typeof formDefinition.new>
+    let form: ReturnType<typeof definedForm.new>
 
     beforeEach(() => {
-      form = formDefinition.new()
+      form = definedForm.new()
     })
 
     test('Default value', () => {
@@ -72,13 +72,13 @@ describe('Form push related', () => {
   })
 
   describe('Array of array of values', () => {
-    const formDefinition = new FormDefinition({
+    const definedForm = formDefinition({
       outer: arrayField(arrayField(numberField())),
     })
-    let form: ReturnType<typeof formDefinition.new>
+    let form: ReturnType<typeof definedForm.new>
 
     beforeEach(() => {
-      form = formDefinition.new()
+      form = definedForm.new()
     })
 
     test('Default value', () => {
@@ -99,13 +99,13 @@ describe('Form push related', () => {
   })
 
   describe('Array of array of array of values', () => {
-    const formDefinition = new FormDefinition({
+    const definedForm = formDefinition({
       outer: arrayField(arrayField(arrayField(numberField()))),
     })
-    let form: ReturnType<typeof formDefinition.new>
+    let form: ReturnType<typeof definedForm.new>
 
     beforeEach(() => {
-      form = formDefinition.new()
+      form = definedForm.new()
     })
 
     test('Default value', () => {
@@ -128,13 +128,13 @@ describe('Form push related', () => {
   })
 
   describe('Array of objects', () => {
-    const formDefinition = new FormDefinition({
+    const definedForm = formDefinition({
       outer: arrayField({ id: numberField() }),
     })
-    let form: ReturnType<typeof formDefinition.new>
+    let form: ReturnType<typeof definedForm.new>
 
     beforeEach(() => {
-      form = formDefinition.new()
+      form = definedForm.new()
     })
 
     test('Default value', () => {
@@ -151,13 +151,13 @@ describe('Form push related', () => {
   })
 
   describe('Array of objects with array key', () => {
-    const formDefinition = new FormDefinition({
+    const definedForm = formDefinition({
       outer: arrayField({ urls: arrayField(charField()) }),
     })
-    let form: ReturnType<typeof formDefinition.new>
+    let form: ReturnType<typeof definedForm.new>
 
     beforeEach(() => {
-      form = formDefinition.new()
+      form = definedForm.new()
     })
 
     test('Default value', () => {
@@ -178,13 +178,13 @@ describe('Form push related', () => {
   })
 
   describe('Array of objects with array of array of values', () => {
-    const formDefinition = new FormDefinition({
+    const definedForm = formDefinition({
       outer: arrayField({ iDontKnow: arrayField(arrayField(numberField())) }),
     })
-    let form: ReturnType<typeof formDefinition.new>
+    let form: ReturnType<typeof definedForm.new>
 
     beforeEach(() => {
-      form = formDefinition.new()
+      form = definedForm.new()
     })
 
     test('Default value', () => {
@@ -209,15 +209,15 @@ describe('Form push related', () => {
   })
 
   describe('Really nested data. Has no idea how to name it', () => {
-    const formDefinition = new FormDefinition({
+    const definedForm = formDefinition({
       outer: arrayField({
         iDontKnow: { middle: arrayField(arrayField({ deepInner: arrayField(arrayField(numberField())) })) },
       }),
     })
-    let form: ReturnType<typeof formDefinition.new>
+    let form: ReturnType<typeof definedForm.new>
 
     beforeEach(() => {
-      form = formDefinition.new()
+      form = definedForm.new()
     })
 
     test('Default value', () => {
